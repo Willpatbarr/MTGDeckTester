@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboarding — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#access">Repo &amp; tool access</a>
+    <a href="#reading">Reading order</a>
+    <a href="#principles">Six principles</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; 05-runbooks &rsaquo; Onboarding</div>
+    <h1>Onboarding</h1>
+  </div>
+
+  <div class="callout">
+    <span class="label">Placeholder, on purpose</span>
+    <p>No teammate exists today &mdash; this is a solo project. This doc is kept current so it's ready the day that changes, not because it's an active process right now. It's deliberately short: process theater has no payoff for a team of one.</p>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> what a second person would need on day one, if there were one. &nbsp;<strong>What to do with it:</strong> hand this page to that person when they exist; until then, just keep it accurate.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Day one is repo access, a four-page reading order, your own Apple Developer account, a Linear seat, and six architectural principles you're expected to already respect by the time you open a pull request.</p>
+
+  <h2 id="access">Repo &amp; tool access</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>What</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>GitHub repo access</td><td>Collaborator access to the private repo. See <a href="../03-services/github.html">github.html</a>.</td></tr>
+      <tr><td>Apple Developer account</td><td>Your <strong>own</strong> account, not a shared one. An Individual account cannot add team members at all &mdash; see the teammate-delta warning in <a href="../03-services/apple-developer.html">apple-developer.html</a> before assuming you can just be added to the existing one.</td></tr>
+      <tr><td>Linear seat</td><td>A seat on team <code>MTGDeckTester</code>. See <a href="../03-services/linear.html">linear.html</a>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="reading">Reading order</h2>
+  <ol>
+    <li><a href="../hub.html">Project hub</a> &mdash; orientation, current status, what's next.</li>
+    <li><a href="../02-architecture/overview.html">02-architecture/overview.html</a> &mdash; the component layering and the two engines.</li>
+    <li><a href="../01-product/decisions.html">01-product/decisions.html</a> &mdash; every call already made, proposed, or deferred.</li>
+    <li><a href="../00-source/contradictions.html">00-source/contradictions.html</a> &mdash; where the source material disagreed with itself, and how it was resolved.</li>
+  </ol>
+
+  <h2 id="principles">Six architectural principles</h2>
+  <p>From <a href="../02-architecture/overview.html">02-architecture/overview.html</a> &sect;5.1, restated compactly. Code that violates these should be treated as a bug, not a style preference.</p>
+  <ol>
+    <li><strong>Strict engine, permissive UI.</strong> The engine is rules-accurate. The UI is a testing tool: it shows all hands and libraries, offers every zone destination, and never blocks you.</li>
+    <li><strong>The UI never infers rules state.</strong> Attackers, blockers, attachments, layers, and legality are explicit <code>GameEngine</code> state, read by the UI, never derived in it.</li>
+    <li><strong>One decision pipeline.</strong> Humans and AI answer the same <code>DecisionRequest</code>. The AI never mutates state directly.</li>
+    <li><strong>Determinism is load-bearing.</strong> Every random choice goes through the game's seeded generator. Replay must be exact.</li>
+    <li><strong>Layout is not game state.</strong> Moving a card within a zone is a layout operation &mdash; no <code>GameAction</code>, not undoable, excluded from replay.</li>
+    <li><strong>Rules knowledge is a subsystem, not a service.</strong> No <code>RulesEngine</code> type exists; rules live inside <code>GameEngine</code>.</li>
+    </ol>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Get repo, Apple Developer, and Linear access before writing anything.</li>
+    <li>Read the four pages in order above.</li>
+    <li>Then follow <a href="local-setup.html">local-setup.html</a> to get a build running.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apple Developer Program — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#what-why">What &amp; why</a>
+    <a href="#trigger">Adoption trigger</a>
+    <a href="#free-tier">Free tier reality</a>
+    <a href="#setup">Setup steps</a>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#escape">Escape hatch</a>
+    <a href="#scale">Cost &amp; scale checkpoints</a>
+    <a href="#teammate">Teammate delta</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; <a href="index.html">03-services</a> &rsaquo; Apple Developer Program</div>
+    <h1>Apple Developer Program</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the one high-lock-in, real-money service in this entire stack — it's the only gatekeeper for getting the app onto a device that isn't plugged into this Mac. &nbsp;<strong>What to do with it:</strong> don't enroll until M7's trigger fires, then follow the setup steps exactly — the bundle ID choice made here is permanent.</p>
+
+  <h2 id="what-why">What &amp; why</h2>
+  <p>The Apple Developer Program is what lets the app run on a device for longer than 7 days and be distributed via TestFlight to anyone besides the developer. Without it, a free Apple ID still builds and runs the app on a physically connected device, but the build expires weekly.</p>
+  <p>There is no real alternative under consideration — this is iOS distribution's single gatekeeper. The only "alternative" is staying on a free Apple ID and re-signing every 7 days, which is fine solo but breaks the moment anyone else needs the app.</p>
+
+  <h2 id="trigger">Adoption trigger</h2>
+  <div class="callout">
+    <span class="label">Adoption trigger</span>
+    <p><span class="prio important">T1 — Before first real user</span> Precisely: the first time you want the app on a device you can't re-plug into your Mac every week. In practice, this is the first tester. A free Apple ID is sufficient for solo development up to that point.</p>
+  </div>
+
+  <h2 id="free-tier">Free tier reality</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Tier</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Free Apple ID</td><td>Builds to your own device, but each build expires after 7 days; limited to 3 apps at a time; no TestFlight.</td></tr>
+      <tr><td>What happens when exceeded</td><td>Not a throttle or a bill — the build simply stops launching after 7 days and needs to be re-signed from Xcode. A hard but harmless stop.</td></tr>
+      <tr><td>First paid tier</td><td>Apple Developer Program: $99/yr flat. Unlocks TestFlight (up to 100 internal testers, 10,000 external), unlimited apps, and no build expiry.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="setup">Setup steps</h2>
+  <ol>
+    <li>Have (or create) an Apple ID under the account that will own this app long-term — this becomes the Team.</li>
+    <li>Enroll at developer.apple.com as an <strong>Individual</strong> (not Organization — see the teammate-delta warning below before deciding). Pay the $99/yr fee.</li>
+    <li>In Xcode, Signing &amp; Capabilities, set the Team to the newly enrolled account.</li>
+    <li>Choose the bundle identifier: <code>com.&lt;yourname&gt;.mtgdecktester</code>.</li>
+    <li>Register the app's App ID in the developer portal (usually automatic the first time Xcode archives with that bundle ID).</li>
+    <li>Create the app record in App Store Connect, matching the same bundle ID.</li>
+    <li>Set up a TestFlight internal testing group and add the first tester's Apple ID email.</li>
+    <li><strong>Verification:</strong> archive a build in Xcode, upload to App Store Connect, wait for TestFlight processing (5&ndash;30 minutes), and confirm the tester receives and can install it via the TestFlight app.</li>
+  </ol>
+
+  <div class="callout">
+    <span class="label">Painful to change later</span>
+    <p>The <strong>Team ID</strong> and <strong>bundle identifier</strong> are effectively permanent. The bundle ID (<code>com.&lt;yourname&gt;.mtgdecktester</code>) is tied to the App Store record for the app's entire lifetime — changing it later means starting over as a new app with no shared history, reviews, or TestFlight testers. Pick it once, carefully, before the first archive.</p>
+  </div>
+
+  <h2 id="secrets">Secrets &amp; config</h2>
+  <p>The main "secrets" here are signing credentials, not API keys.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Value</th><th>Client-safe?</th><th>Lives where locally</th><th>Lives where in production</th><th>In <code>.env.example</code>?</th></tr></thead>
+    <tbody>
+      <tr><td>Distribution certificate &amp; private key</td><td>No — server/local-only, never client-side</td><td>macOS Keychain</td><td>App Store Connect / Xcode-managed signing</td><td>No — not an env var, managed by Xcode</td></tr>
+      <tr><td>App Store Connect API key (if automating uploads later)</td><td>No — server-only</td><td>Local keychain or CI secret store</td><td>CI secret store, if adopted</td><td>No — placeholder name only if CI is ever added</td></tr>
+      <tr><td>Bundle ID / Team ID</td><td>Yes — not sensitive</td><td>Xcode project settings (committed)</td><td>Same, committed to the repo</td><td>Not applicable — these live in project settings, not env vars</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Real secrets — signing certificates and any API keys — are never committed to the repository. Xcode manages certificate storage in the Keychain, outside the git tree.</p>
+
+  <h2 id="escape">Escape hatch</h2>
+  <p><strong>Lock-in: High.</strong> There is no alternative distribution path for iOS — this is the one gatekeeper. Once TestFlight testers and an App Store Connect record exist, they cannot be moved to another provider; the entire relationship is Apple-specific.</p>
+  <p>What lives only here: the App Store Connect app record, TestFlight tester list and build history, and any App Store reviews if the app is ever published publicly. There is no meaningful "migrating off" — this is why M7 is treated as a real milestone rather than an afterthought.</p>
+
+  <h2 id="scale">Cost &amp; scale checkpoints</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Scale</th><th>What breaks</th></tr></thead>
+    <tbody>
+      <tr><td>~10 users</td><td>Nothing — well within TestFlight's 100 internal / 10,000 external tester limits. Cost stays flat at $99/yr.</td></tr>
+      <tr><td>~100 users</td><td>Still within TestFlight external tester limits; still $99/yr. No change needed.</td></tr>
+      <tr><td>~1,000 users</td><td>Still under the 10,000 external TestFlight cap, but at this point a public App Store listing (rather than TestFlight-only distribution) becomes the practical next step — same $99/yr membership, different distribution mechanism.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="teammate">Teammate delta</h2>
+  <div class="callout">
+    <span class="label">Sharpest edge in the whole stack</span>
+    <p>An <strong>Individual</strong> Apple Developer account cannot add team members at all — there is no seat model, no invite flow, nothing. A second person who needs to build, sign, or release this app needs either their own separate Apple Developer account, or the whole project needs to re-enroll under an <strong>Organization</strong> account, which requires a D-U-N-S number and typically takes weeks to obtain and verify. This is the single highest-friction teammate blocker in the entire service stack — plan for it well before a second contributor is imminent, not after.</p>
+  </div>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Extra seat cost</td><td>Not applicable under Individual — no seats exist. Under Organization, additional roles (Admin, App Manager, Developer) are free once enrolled, but enrollment itself needs a D-U-N-S number and weeks of lead time.</td></tr>
+      <tr><td>Permission model</td><td>Individual: none, single account owner only. Organization: role-based (Admin/App Manager/Developer/Marketing).</td></tr>
+      <tr><td>Free tier allows another member?</td><td>No — there is no free tier for team membership at all under Individual.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Do not enroll yet — wait for the T1 trigger (first tester who isn't you) as tracked in M7.</li>
+    <li>When the trigger fires, decide Individual vs. Organization <em>before</em> enrolling, based on whether a second contributor is realistically imminent — Organization's D-U-N-S lead time makes switching later expensive.</li>
+    <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

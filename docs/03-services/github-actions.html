@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub Actions — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#what-why">What &amp; why</a>
+    <a href="#trigger">Adoption trigger</a>
+    <a href="#free-tier">Free tier reality</a>
+    <a href="#setup">Setup steps</a>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#escape">Escape hatch</a>
+    <a href="#scale">Cost &amp; scale checkpoints</a>
+    <a href="#teammate">Teammate delta</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; <a href="index.html">03-services</a> &rsaquo; GitHub Actions</div>
+    <h1>GitHub Actions</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> CI that answers "does it build, do tests pass" — deliberately not set up yet. &nbsp;<strong>What to do with it:</strong> leave it alone until the named trigger fires; setting it up early burns free minutes for no real benefit at solo scale.</p>
+
+  <h2 id="what-why">What &amp; why</h2>
+  <p>GitHub Actions would run the Swift Testing engine suite (see <a href="../02-architecture/conventions.html">conventions.html</a>) automatically on push, catching a broken build or a failing test before it's discovered by hand. Right now, that check happens manually, by running the tests locally before pushing.</p>
+  <p>Alternatives considered: Xcode Cloud (Apple's own CI, tightly integrated, but a second billing relationship and quota to track for a solo project) and Buildkite/CircleCI (more capable, but built for teams and overkill here). GitHub Actions won because it's already colocated with the repo and free minutes are available if the threshold below is ever hit.</p>
+
+  <h2 id="trigger">Adoption trigger</h2>
+  <div class="callout">
+    <span class="label">Adoption trigger</span>
+    <p><span class="prio optional">T2 — When it hurts</span> Named threshold: the second time a commit gets pushed that doesn't actually compile or pass tests. One slip is a fluke; two is a pattern worth automating around.</p>
+  </div>
+
+  <h2 id="free-tier">Free tier reality</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Limit</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Minutes</td><td>2,000 minutes/month on a private repo, free tier.</td></tr>
+      <tr><td>macOS runner multiplier</td><td><strong>macOS runners burn minutes at 10&times; the listed rate</strong> — so the 2,000-minute allowance is really only about 200 real minutes/month of iOS build time, roughly 15&ndash;20 builds. This is exactly why this is T2, not T0.</td></tr>
+      <tr><td>What happens when exceeded</td><td>Hard stop — builds queued past the minute allowance don't run until the next billing cycle unless minutes are purchased.</td></tr>
+      <tr><td>First paid tier</td><td>Pay-per-minute billing beyond the included allowance; verify current per-minute macOS runner pricing at signup, as GitHub's runner pricing has changed before.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="setup">Setup steps</h2>
+  <p>Not applicable yet — this service is intentionally not set up. When the T2 trigger fires, the outline is:</p>
+  <ol>
+    <li>Add a workflow file at <code>.github/workflows/build-and-test.yml</code> in the repo.</li>
+    <li>Configure it to run on a <code>macos-latest</code> runner, triggered on push and pull request to <code>main</code>.</li>
+    <li>Steps: checkout, select the correct Xcode version, <code>xcodebuild build</code>, then <code>xcodebuild test</code> against the Swift Testing engine suite.</li>
+    <li>Given the 10&times; minute multiplier, scope the workflow tightly — run it only on pushes to <code>main</code> and PRs, not on every branch push, to conserve the ~200 effective minutes/month.</li>
+    <li><strong>Verification (when this is actually set up):</strong> push a commit with a deliberately failing test and confirm the workflow run fails and is visible on the commit/PR; then fix it and confirm a green run.</li>
+  </ol>
+
+  <h2 id="secrets">Secrets &amp; config</h2>
+  <p>No secrets are needed for a basic build-and-test workflow. If code signing is ever added to CI (e.g. for automated TestFlight uploads), that introduces real secrets.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Value</th><th>Client-safe?</th><th>Lives where locally</th><th>Lives where in production</th><th>In <code>.env.example</code>?</th></tr></thead>
+    <tbody>
+      <tr><td>None for build/test only</td><td>n/a</td><td>n/a</td><td>n/a</td><td>No entry needed</td></tr>
+      <tr><td>Signing certificate + App Store Connect API key (only if CI is later extended to upload builds)</td><td>No — server/CI-only, never client-side</td><td>n/a — CI-only</td><td>GitHub Actions encrypted repository secrets</td><td>Placeholder name only if this is ever added</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Real secrets are never committed to the repository. GitHub's own encrypted Secrets store is the correct home for anything added later.</p>
+
+  <h2 id="escape">Escape hatch</h2>
+  <p><strong>Lock-in: Low.</strong> A GitHub Actions workflow file is a small, self-contained YAML file. The actual build/test commands it runs (<code>xcodebuild</code>) are standard and not GitHub-specific.</p>
+  <p>Migrating to another CI provider means rewriting the same handful of steps in that provider's YAML dialect — an hour of work, not a rearchitecture.</p>
+
+  <h2 id="scale">Cost &amp; scale checkpoints</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Scale</th><th>What breaks</th></tr></thead>
+    <tbody>
+      <tr><td>~10 users</td><td>Not relevant — this tracks commit frequency and CI usage, not app user count.</td></tr>
+      <tr><td>~100 users</td><td>Still not directly tied to user count; if a teammate is now pushing commits too, the effective ~200 minutes/month of macOS build time gets consumed twice as fast.</td></tr>
+      <tr><td>~1,000 users</td><td>No direct effect from app scale. Multiple contributors pushing frequently is what would exhaust the free minute allowance, not app popularity.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="teammate">Teammate delta</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Extra seat cost</td><td>$0 for Actions itself — minutes are shared across the repo, not billed per-seat. More contributors just means the shared ~200-minute macOS allowance gets consumed faster.</td></tr>
+      <tr><td>Permission model</td><td>Inherits repo collaborator permissions — anyone with write access can trigger workflow runs on their own pushes/PRs.</td></tr>
+      <tr><td>Free tier allows another member?</td><td>Yes — no member cap specific to Actions; it's gated by GitHub repo collaborator access instead.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Do nothing until a second broken-build push actually happens — see the trigger above.</li>
+    <li>When it fires, scope the workflow tightly given the 10&times; macOS minute multiplier.</li>
+    <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

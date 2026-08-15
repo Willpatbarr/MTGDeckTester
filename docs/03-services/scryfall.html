@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scryfall — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#what-why">What &amp; why</a>
+    <a href="#trigger">Adoption trigger</a>
+    <a href="#free-tier">Free tier reality</a>
+    <a href="#setup">Setup steps</a>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#escape">Escape hatch</a>
+    <a href="#scale">Cost &amp; scale checkpoints</a>
+    <a href="#teammate">Teammate delta</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; <a href="index.html">03-services</a> &rsaquo; Scryfall</div>
+    <h1>Scryfall</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the runbook for the app's only genuinely load-bearing external dependency. &nbsp;<strong>What to do with it:</strong> follow the setup steps once, then treat the caching rules as permanent — Scryfall is volunteer-run and has no paid tier to fall back on.</p>
+
+  <h2 id="what-why">What &amp; why</h2>
+  <p>Scryfall supplies the complete MTG card database — names, mana costs, type lines, images, and (critically) <code>all_parts</code> token relations, which are what let the manual token picker limit itself to tokens a given deck can actually create. No card data means no deck import, no rendering, no token picker: the entire app is downstream of this one API.</p>
+  <p>Alternatives considered: MTGJSON (excellent bulk data, no image hosting, a heavier schema to map) and the <code>magicthegathering.io</code> API (stale, effectively unmaintained). Scryfall won because it is the only source with images, freshness, and token relations in one place.</p>
+
+  <h2 id="trigger">Adoption trigger</h2>
+  <div class="callout">
+    <span class="label">Adoption trigger</span>
+    <p><span class="prio must">T0 — Now</span> Nothing in the app works without card data. This is the first service that gets wired up, before any UI exists.</p>
+  </div>
+
+  <h2 id="free-tier">Free tier reality</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Limit</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Account</td><td>None needed. No signup, no API key, ever.</td></tr>
+      <tr><td>Rate limit</td><td>~10 requests/second; Scryfall's own guidance asks for 50&ndash;100ms between requests and a descriptive <code>User-Agent</code> plus <code>Accept</code> header.</td></tr>
+      <tr><td>What happens when exceeded</td><td><strong>Hard stop, not a bill.</strong> Exceeding it returns HTTP 429, and sustained abuse escalates to an IP block.</td></tr>
+      <tr><td>First paid tier</td><td>There isn't one. This is a volunteer-run service with no commercial offering to fall back on.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="label">Caching is a courtesy, not just an optimization</span>
+    <p>Scryfall is run by volunteers on donated infrastructure with no paid tier behind it. Hitting the rate limit gets you throttled and eventually IP-blocked — never invoiced. Aggressive local caching (the bulk file, plus a persistent image cache) isn't a performance nicety here; it's the price of being allowed to keep using a free service other developers depend on too.</p>
+  </div>
+
+  <h2 id="setup">Setup steps</h2>
+  <ol>
+    <li>No account or signup — there is nothing to create.</li>
+    <li>Set <code>User-Agent: MTGDeckTester/0.1 (contact)</code> and a proper <code>Accept</code> header on every outgoing request.</li>
+    <li>Fetch <code>https://api.scryfall.com/bulk-data</code> and read the <code>default_cards</code> entry's <code>download_uri</code>.</li>
+    <li>Download and parse the bulk file on first launch; persist parsed cards to SwiftData.</li>
+    <li>Refresh weekly by comparing the bulk entry's <code>updated_at</code> against the last local refresh.</li>
+    <li>For any card the bulk file doesn't resolve (a cache miss during import), fall back to <code>GET /cards/named?exact=</code>, respecting the same rate limit.</li>
+    <li>Store image <strong>URLs</strong> from the card object, then cache the actual image bytes to disk yourself. Never hotlink Scryfall's image URLs at render time.</li>
+    <li><strong>Verification:</strong> import a decklist containing a double-faced card and a card that creates a token. Confirm both faces render correctly and the token shows up as an option in the manual token picker.</li>
+  </ol>
+
+  <h2 id="secrets">Secrets &amp; config</h2>
+  <p><strong>No secrets exist for this service.</strong> There is no API key to protect. The only configuration value is the <code>User-Agent</code> string, which is not sensitive and is safe to compile into the client.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Value</th><th>Client-safe?</th><th>Lives where locally</th><th>Lives where in production</th><th>In <code>.env.example</code>?</th></tr></thead>
+    <tbody>
+      <tr><td><code>SCRYFALL_USER_AGENT</code></td><td>Yes — not a secret</td><td>Xcode scheme environment variable</td><td>Compiled into the app / build config</td><td>Yes</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>As with every service in this project, real secrets are never committed to the repository — there simply are none here to commit.</p>
+
+  <h2 id="escape">Escape hatch</h2>
+  <p><strong>Lock-in: Low.</strong> No data lives only at Scryfall — the downloaded bulk file and the image cache both live on the device's own disk once fetched.</p>
+  <p>Migrating to MTGJSON (the documented fallback) would mean rewriting the ingest parser and re-deriving the token-relation logic from a different schema — a parser rewrite measured in days, not weeks, with no data loss since nothing is stored server-side.</p>
+
+  <h2 id="scale">Cost &amp; scale checkpoints</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Scale</th><th>What breaks</th></tr></thead>
+    <tbody>
+      <tr><td>~10 users</td><td>Nothing. Each device downloads and caches its own bulk file independently.</td></tr>
+      <tr><td>~100 users</td><td>Still nothing. There is no shared quota — every user's traffic is their own device against Scryfall's public API, same as one user.</td></tr>
+      <tr><td>~1,000 users</td><td>Still nothing changes on the cost side. The only risk at any scale is a client bug that ignores the rate limit and throttles or blocks a user's own IP — worth a smoke test, not a budget line.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="teammate">Teammate delta</h2>
+  <p>None. There are no accounts, no seats, and nothing to share or provision. A second person building the app hits Scryfall exactly the same way the first person does.</p>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Implement the bulk-data ingest and per-card fallback exactly as described above (Linear issues #4 and #5 under M1).</li>
+    <li>Confirm the <code>User-Agent</code> header is actually being sent — some HTTP client defaults silently override it.</li>
+    <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

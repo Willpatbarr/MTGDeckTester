@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linear — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#what-why">What &amp; why</a>
+    <a href="#trigger">Adoption trigger</a>
+    <a href="#free-tier">Free tier reality</a>
+    <a href="#setup">Setup steps</a>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#escape">Escape hatch</a>
+    <a href="#scale">Cost &amp; scale checkpoints</a>
+    <a href="#teammate">Teammate delta</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; <a href="index.html">03-services</a> &rsaquo; Linear</div>
+    <h1>Linear</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the planning UI — team, project, milestones, and the full issue list from the brief. &nbsp;<strong>What to do with it:</strong> use this runbook to verify the existing setup matches the brief, not to create it from scratch.</p>
+
+  <h2 id="what-why">What &amp; why</h2>
+  <p>Linear tracks the seven milestones and roughly 72 planned issues for this project, organized under team <code>MTGDeckTester</code> and project <strong>MTG Deck Tester</strong> (key <code>MDT</code>). It's where "what am I building next" lives, separate from the docs site's "why did we decide this."</p>
+  <p>Alternatives considered: GitHub Issues (would keep everything in one tool, but its milestone/cycle model is weaker and there's no reason to duplicate a tool the user already has a Linear habit with) and a plain markdown task list (loses the structured labels, filtering, and dependency links this project's issue graph actually needs). Linear won on being the tool already in use with the right feature set for milestone + dependency tracking.</p>
+
+  <h2 id="trigger">Adoption trigger</h2>
+  <div class="callout">
+    <span class="label">Adoption trigger</span>
+    <p><span class="prio must">T0 — Now</span> Planning happens before code exists. The milestone and issue structure needs to be in place before M1 work starts, not retrofitted after.</p>
+  </div>
+
+  <h2 id="free-tier">Free tier reality</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Limit</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Issues</td><td>250 issues on the free plan.</td></tr>
+      <tr><td>Teams</td><td>2 teams on the free plan.</td></tr>
+      <tr><td>Current usage</td><td>~72 issues planned across 7 milestones — comfortably under the cap, but worth watching as should-have and someday features get filed too.</td></tr>
+      <tr><td>What happens when exceeded</td><td>Hard stop on creating new issues past 250 until the plan is upgraded or old issues are archived/deleted.</td></tr>
+      <tr><td>First paid tier</td><td>Linear's paid "Basic" plan removes the issue cap — verify current price at signup, as Linear's pricing has changed before.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="setup">Setup steps</h2>
+  <p>Team and project already exist. These steps are a verification checklist.</p>
+  <ol>
+    <li>Confirm team <code>MTGDeckTester</code> exists (id <code>da95790b-599f-433b-84c8-8123ad0ec6a3</code> per the master brief).</li>
+    <li>Confirm project <strong>MTG Deck Tester</strong> exists under that team with issue key <code>MDT</code>.</li>
+    <li>Confirm the 7 milestones from the plan (M1&ndash;M7) exist as Linear milestones or cycles, matching <a href="../04-plan/milestones.html">../04-plan/milestones.html</a>.</li>
+    <li>Confirm the label set exists: <code>area/models</code>, <code>area/engine</code>, <code>area/rules</code>, <code>area/ai</code>, <code>area/ui</code>, <code>area/data</code>, <code>area/services</code>, <code>area/docs</code>, <code>T0</code>, <code>T1</code>, <code>T2</code>, <code>proposed</code>.</li>
+    <li>Spot-check a handful of the ~72 issues against the list in the master brief to confirm titles, milestones, and labels line up.</li>
+    <li><strong>Verification:</strong> open the project view, filter by milestone M1, and confirm the 11 M1 issues listed in the brief are all present with the right labels.</li>
+  </ol>
+
+  <h2 id="secrets">Secrets &amp; config</h2>
+  <p>No secrets are needed for normal use — Linear is accessed via its web app or native app with the user's own login. If a Linear API key or MCP integration token is ever used for automation, it is server-side/local-only, never client-side, and never committed.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Value</th><th>Client-safe?</th><th>Lives where locally</th><th>Lives where in production</th><th>In <code>.env.example</code>?</th></tr></thead>
+    <tbody>
+      <tr><td>Linear personal API key (if used for automation/MCP)</td><td>No — server/local-only</td><td>Local environment variable or keychain</td><td>n/a — not used by the shipped app</td><td>Yes, as a placeholder if any tooling depends on it</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Real secrets are never committed to the repository. The app itself has no Linear integration at runtime — this is a planning tool only.</p>
+
+  <h2 id="escape">Escape hatch</h2>
+  <p><strong>Lock-in: Low.</strong> Issue content, titles, and comments export via Linear's CSV/API export. Nothing in the app depends on Linear at runtime — it is purely a planning artifact.</p>
+  <p>Migrating off Linear would mean exporting issues to CSV or JSON and re-importing into whatever replaces it (GitHub Issues, a markdown file, another tracker). Given ~72 issues, this is an afternoon, not a project.</p>
+
+  <h2 id="scale">Cost &amp; scale checkpoints</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Scale</th><th>What breaks</th></tr></thead>
+    <tbody>
+      <tr><td>~10 users</td><td>Nothing — app users never see Linear. This only tracks work, not app usage.</td></tr>
+      <tr><td>~100 users</td><td>Still nothing directly, though more users likely means more should-have/someday issues get filed, pushing closer to the 250-issue free cap.</td></tr>
+      <tr><td>~1,000 users</td><td>No direct effect from app scale; the issue-count cap is a function of how much work gets tracked, not how many people use the app.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="teammate">Teammate delta</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Extra seat cost</td><td>Verify at signup — Linear's free plan historically allows a small number of members before requiring a paid plan; confirm current member limit before inviting anyone.</td></tr>
+      <tr><td>Permission model</td><td>Workspace-level roles (admin/member/guest); invite by email from workspace settings.</td></tr>
+      <tr><td>Free tier allows another member?</td><td>Likely yes for a second person, but confirm the current free-plan member cap at signup rather than assuming.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Run the verification checklist above against the live Linear workspace.</li>
+    <li>Keep an eye on the 250-issue cap as should-have and someday features get filed beyond the ~72 currently planned.</li>
+    <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TelemetryDeck — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#what-why">What &amp; why</a>
+    <a href="#trigger">Adoption trigger</a>
+    <a href="#free-tier">Free tier reality</a>
+    <a href="#setup">Setup steps</a>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#escape">Escape hatch</a>
+    <a href="#scale">Cost &amp; scale checkpoints</a>
+    <a href="#teammate">Teammate delta</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; <a href="index.html">03-services</a> &rsaquo; TelemetryDeck</div>
+    <h1>TelemetryDeck</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> privacy-first usage analytics, deliberately deferred until it's actually needed. &nbsp;<strong>What to do with it:</strong> ignore this until the T2 trigger fires — do not integrate it early "just in case."</p>
+
+  <h2 id="what-why">What &amp; why</h2>
+  <p>TelemetryDeck would answer "which features does anyone actually use" once there are enough testers that the answer isn't obvious from just talking to them. It reports aggregate, anonymized usage signals rather than individual user tracking.</p>
+  <p>Alternatives considered: Amplitude/Mixpanel (powerful, but heavyweight and explicitly rejected as premature per the services index — a privacy tax on a personal tool with zero users) and Firebase Analytics (drags in the Firebase SDK for one feature, same objection as Sentry's Crashlytics alternative). TelemetryDeck won for being privacy-first by default and lightweight, matching a solo tool that doesn't want to collect more than it needs.</p>
+
+  <h2 id="trigger">Adoption trigger</h2>
+  <div class="callout">
+    <span class="label">Adoption trigger</span>
+    <p><span class="prio optional">T2 — When it hurts</span> Named threshold: more than 10 testers, and you genuinely can't tell which features anyone uses just by asking them directly. Below that, a conversation with each tester is more informative than a dashboard.</p>
+  </div>
+
+  <h2 id="free-tier">Free tier reality</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Limit</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Signals</td><td>100,000 signals/month.</td></tr>
+      <tr><td>What happens when exceeded</td><td>Verify at signup — TelemetryDeck's overage behavior (soft throttle vs. hard stop) should be confirmed before relying on it at any real scale, since it isn't specified in the planning brief.</td></tr>
+      <tr><td>First paid tier</td><td>Verify at signup — do not assume a figure without checking TelemetryDeck's current pricing page.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="setup">Setup steps</h2>
+  <p>Not applicable yet — this service is intentionally not set up. When the T2 trigger fires, the outline is:</p>
+  <ol>
+    <li>Create a TelemetryDeck account and a new app entry.</li>
+    <li>Obtain the app ID / signal key from the TelemetryDeck dashboard.</li>
+    <li>Add the TelemetryDeck Swift Package to the Xcode project.</li>
+    <li>Initialize the SDK with the app ID, and decide which events are worth tracking — feature usage only, never personal or deck-content data.</li>
+    <li>Confirm the SDK's default anonymization/opt-out behavior matches the project's privacy stance before shipping.</li>
+    <li><strong>Verification (when this is actually set up):</strong> trigger a test event from a debug build and confirm it appears in the TelemetryDeck dashboard within a few minutes.</li>
+  </ol>
+
+  <h2 id="secrets">Secrets &amp; config</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Value</th><th>Client-safe?</th><th>Lives where locally</th><th>Lives where in production</th><th>In <code>.env.example</code>?</th></tr></thead>
+    <tbody>
+      <tr><td>TelemetryDeck app ID / signal key</td><td>Yes — designed to be embedded client-side, not a secret in the traditional sense</td><td>Xcode scheme / config file</td><td>Compiled into the release build</td><td>Yes, as <code>TELEMETRYDECK_APP_ID</code>, once this service is actually adopted</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Real secrets are never committed to the repository. Even though the app ID here is client-safe, it stays out of the codebase until the service is actually turned on — no placeholder wiring before it's needed.</p>
+
+  <h2 id="escape">Escape hatch</h2>
+  <p><strong>Lock-in: Low.</strong> Usage analytics are additive and non-authoritative — nothing in the app's core logic depends on TelemetryDeck data existing or being accurate.</p>
+  <p>Migrating off it means swapping the SDK initialization for another analytics provider (or removing analytics entirely) and updating the one config value. No historical data needs to be preserved for the app to keep functioning.</p>
+
+  <h2 id="scale">Cost &amp; scale checkpoints</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Scale</th><th>What breaks</th></tr></thead>
+    <tbody>
+      <tr><td>~10 users</td><td>Below the adoption trigger — this service shouldn't even be integrated yet at this scale.</td></tr>
+      <tr><td>~100 users</td><td>Comfortably within the 100,000 signals/month free tier for reasonable event volumes.</td></tr>
+      <tr><td>~1,000 users</td><td>Depends on how many events are tracked per session; worth checking actual signal volume against the cap once real usage data exists, rather than assuming it stays free.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="teammate">Teammate delta</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Extra seat cost</td><td>Verify at signup — not specified in the planning brief.</td></tr>
+      <tr><td>Permission model</td><td>Verify at signup — likely organization/dashboard-based, not confirmed here.</td></tr>
+      <tr><td>Free tier allows another member?</td><td>Verify at signup.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Do nothing with this service until more than 10 testers exist and feature usage genuinely becomes unclear.</li>
+    <li>When the trigger fires, verify current pricing and overage behavior before integrating — several figures above are marked "verify at signup" deliberately.</li>
+    <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

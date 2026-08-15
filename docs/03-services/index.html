@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Services — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#service-map">Service map</a>
+    <a href="#rejected">Rejected as premature</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; 03-services</div>
+    <h1>Services</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> every external service the app touches, why, and exactly when each one gets turned on. &nbsp;<strong>What to do with it:</strong> before adding any new service, check the "Rejected as premature" table first — it is probably already on there.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">This is an offline-first local iOS app with no backend, so the service list is deliberately tiny — eight services, four of them not needed until a real tester or a real cost shows up.</p>
+
+  <h2 id="service-map">Service map</h2>
+  <p>Trigger tiers: <span class="prio must">must</span> T0 — needed to build or run at all. <span class="prio important">important</span> T1 — needed the moment someone who isn't me touches it. <span class="prio optional">optional</span> T2 — only when a named threshold is crossed.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead>
+      <tr><th>Service</th><th>Purpose</th><th>Trigger</th><th>Free tier</th><th>Est. cost now</th><th>Lock-in</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="github.html">GitHub (private repo)</a></td>
+        <td>Code, docs, canonical history</td>
+        <td><span class="prio must">T0 — Now</span></td>
+        <td>Unlimited private repos, unlimited collaborators</td>
+        <td>$0</td>
+        <td>Low</td>
+        <td>Set up</td>
+      </tr>
+      <tr>
+        <td><a href="scryfall.html">Scryfall API</a></td>
+        <td>Card data, images, token relations</td>
+        <td><span class="prio must">T0 — Now</span></td>
+        <td>Free, no account, no key</td>
+        <td>$0</td>
+        <td>Low</td>
+        <td>Not set up</td>
+      </tr>
+      <tr>
+        <td><a href="linear.html">Linear</a></td>
+        <td>Planning UI (milestones + issues)</td>
+        <td><span class="prio must">T0 — Now</span></td>
+        <td>Free: 250 issues, 2 teams</td>
+        <td>$0</td>
+        <td>Low</td>
+        <td>Set up</td>
+      </tr>
+      <tr>
+        <td><a href="cloudflare-pages.html">Cloudflare Pages</a></td>
+        <td>Renders <code>docs/</code> as a site on push</td>
+        <td><span class="prio must">T0 — Now</span></td>
+        <td>500 builds/mo, unlimited bandwidth</td>
+        <td>$0</td>
+        <td>Low</td>
+        <td>Not set up</td>
+      </tr>
+      <tr>
+        <td><a href="apple-developer.html">Apple Developer Program</a></td>
+        <td>Device builds beyond 7 days, TestFlight</td>
+        <td><span class="prio important">T1 — Before first real user</span></td>
+        <td>None ($99/yr) — free Apple ID gives 7-day local builds</td>
+        <td>$0 &rarr; $99/yr</td>
+        <td>High</td>
+        <td>Not set up</td>
+      </tr>
+      <tr>
+        <td><a href="sentry.html">Sentry</a></td>
+        <td>Crash &amp; error reporting</td>
+        <td><span class="prio important">T1 — Before first real user</span></td>
+        <td>5k errors/mo, 1 user, 30-day retention</td>
+        <td>$0</td>
+        <td>Low</td>
+        <td>Not set up</td>
+      </tr>
+      <tr>
+        <td><a href="telemetrydeck.html">TelemetryDeck</a></td>
+        <td>Privacy-first usage analytics</td>
+        <td><span class="prio optional">T2 — When it hurts</span></td>
+        <td>100k signals/mo</td>
+        <td>$0</td>
+        <td>Low</td>
+        <td>Not set up</td>
+      </tr>
+      <tr>
+        <td><a href="github-actions.html">GitHub Actions</a></td>
+        <td>"Does it build, do tests pass"</td>
+        <td><span class="prio optional">T2 — When it hurts</span></td>
+        <td>2,000 min/mo private — macOS burns 10&times;, so ~200 real min</td>
+        <td>$0</td>
+        <td>Low</td>
+        <td>Not set up</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="card">
+    <h3>Total cost, right now</h3>
+    <p><strong>$0.</strong> Every T0 service is free at this project's scale. Nothing here has a card on file.</p>
+  </div>
+
+  <div class="card">
+    <h3>Total cost after the T1 trigger</h3>
+    <p><strong>$99/yr.</strong> That is the Apple Developer Program membership, paid once the first tester who isn't you needs a build. Sentry stays free at T1; nothing else changes.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">Trigger legend</span>
+    <p><strong>T0</strong> — needed to build or run the app at all, today, solo. <strong>T1</strong> — needed the moment someone who isn't me touches the app or its data. <strong>T2</strong> — only worth doing once a named, concrete threshold is actually crossed, not "eventually."</p>
+  </div>
+
+  <h2 id="rejected">Rejected as premature</h2>
+  <p>This is the record of what is deliberately <em>not</em> being done, and exactly what would have to change for that to flip. Check here before adding a new service to the stack.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Rejected</th><th>Why not</th><th>What would change my mind</th></tr></thead>
+    <tbody>
+      <tr><td>Firebase / Supabase / any backend</td><td>The app is entirely local. There is no server-side problem to solve.</td><td>Cross-device deck sync, or shared/online games</td></tr>
+      <tr><td>CloudKit sync</td><td>Free and native, but syncing SwiftData across devices is a genuine engineering project.</td><td>You own two devices and are actually annoyed</td></tr>
+      <tr><td>Auth provider (Clerk, Auth0, Sign in with Apple)</td><td>There are no accounts. Nothing to authenticate.</td><td>Any feature that isn't purely local</td></tr>
+      <tr><td>RevenueCat / any monetization</td><td>Not a product.</td><td>You decide to sell it</td></tr>
+      <tr><td>Fastlane</td><td>One build a week, done by hand, is not a bottleneck.</td><td>Releasing more than weekly, or a teammate builds too</td></tr>
+      <tr><td>Feature flags (LaunchDarkly etc.)</td><td>Solo dev with one branch. <code>#if DEBUG</code> is the feature flag.</td><td>More than 5 testers on different builds</td></tr>
+      <tr><td>Push notifications (APNs)</td><td>Nothing to notify about in an offline solo game.</td><td>Async/online multiplayer</td></tr>
+      <tr><td>A hosted database of any kind</td><td>SwiftData on-device covers every stated need.</td><td>See "backend" above</td></tr>
+      <tr><td>Docker / any container</td><td>It's a Swift app that runs on a phone.</td><td>Never, for this project</td></tr>
+      <tr><td>Analytics on day one (Amplitude, Mixpanel)</td><td>Zero users. Nothing to analyze. Also a privacy tax on a personal tool.</td><td>TelemetryDeck at T2 covers this</td></tr>
+      <tr><td>Dedicated MTG rules library (e.g. a Forge/XMage port)</td><td>Java-based, wrong platform, and the whole point is your own engine.</td><td>Never — this is the project</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Set up Scryfall access (<a href="scryfall.html">scryfall.html</a>) and Cloudflare Pages (<a href="cloudflare-pages.html">cloudflare-pages.html</a>) — both are T0 and both are still marked "not set up."</li>
+    <li>Verify the existing GitHub and Linear setup against their runbooks (<a href="github.html">github.html</a>, <a href="linear.html">linear.html</a>) rather than assuming they're correctly configured.</li>
+    <li>Leave Apple Developer, Sentry, TelemetryDeck, and GitHub Actions alone until their named trigger fires — see <a href="../04-plan/milestones.html">../04-plan/milestones.html</a> for where M7 turns T1 on.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

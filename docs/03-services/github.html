@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#what-why">What &amp; why</a>
+    <a href="#trigger">Adoption trigger</a>
+    <a href="#free-tier">Free tier reality</a>
+    <a href="#setup">Setup steps</a>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#escape">Escape hatch</a>
+    <a href="#scale">Cost &amp; scale checkpoints</a>
+    <a href="#teammate">Teammate delta</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; <a href="index.html">03-services</a> &rsaquo; GitHub</div>
+    <h1>GitHub</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the canonical home for code, docs, and history — already set up. &nbsp;<strong>What to do with it:</strong> use this runbook to verify the existing setup, not to create it from scratch.</p>
+
+  <h2 id="what-why">What &amp; why</h2>
+  <p>GitHub hosts the private repository <code>Willpatbarr/MTGDeckTester</code> — the single source of truth for Swift code, the draw.io diagrams, and this docs site. It is also the trigger for the docs build: pushing to <code>main</code> is what Cloudflare Pages watches.</p>
+  <p>Alternatives considered: GitLab and Bitbucket both offer equivalent private-repo hosting, but GitHub was already the account in use before this project started, and switching would cost migration effort for zero functional gain on a solo project.</p>
+
+  <h2 id="trigger">Adoption trigger</h2>
+  <div class="callout">
+    <span class="label">Adoption trigger</span>
+    <p><span class="prio must">T0 — Now</span> Version control exists from the first commit. There is no meaningful "before" state to compare against.</p>
+  </div>
+
+  <h2 id="free-tier">Free tier reality</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Limit</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Private repos</td><td>Unlimited, free, no card required.</td></tr>
+      <tr><td>Collaborators</td><td>Unlimited on free private repos.</td></tr>
+      <tr><td>What happens when exceeded</td><td>Nothing to exceed for repo hosting itself. The one real limit in this stack is <strong>GitHub Pages on a private repo</strong>, which requires GitHub Pro or higher — see the setup steps below.</td></tr>
+      <tr><td>First paid tier</td><td>GitHub Pro is $4/mo if Pages-on-private turns out to be needed; not required today since Cloudflare Pages already serves the docs.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="setup">Setup steps</h2>
+  <p>The repo already exists and is already in use. These steps are a verification checklist, not a from-scratch setup.</p>
+  <ol>
+    <li>Confirm the repo <code>Willpatbarr/MTGDeckTester</code> is set to <strong>Private</strong> under Settings &rarr; General.</li>
+    <li>Confirm <code>main</code> is the default branch and that the working tree matches what's expected locally (<code>git status</code> clean, <code>git log</code> shows the expected commits).</li>
+    <li>If GitHub Pages is ever wanted as a second docs host: Settings &rarr; Pages &rarr; Source &rarr; Deploy from branch &rarr; branch <code>main</code>, folder <code>/docs</code>. <strong>Note this will not activate on a private repo without a paid GitHub plan (Pro or higher).</strong> If it silently fails to activate, that is why — Cloudflare Pages is the documented fallback and is already the primary docs host, so this is optional, not blocking.</li>
+    <li>Confirm branch protection (if any) matches intent — for a solo project, none is required; add it only once a teammate exists.</li>
+    <li><strong>Verification:</strong> push a trivial commit to <code>main</code> and confirm it appears on GitHub, and (once Cloudflare Pages is wired up per <a href="cloudflare-pages.html">cloudflare-pages.html</a>) that the docs site rebuilds within about a minute.</li>
+  </ol>
+
+  <div class="callout">
+    <span class="label">Painful to change later</span>
+    <p>Repository visibility and the org/username prefix (<code>Willpatbarr/MTGDeckTester</code>) are cheap to change technically, but any external link referencing the old path breaks. Treat the repo slug as settled.</p>
+  </div>
+
+  <h2 id="secrets">Secrets &amp; config</h2>
+  <p>No application secrets live in GitHub today. If GitHub Actions or Pages-with-secrets are adopted later, repository secrets go under Settings &rarr; Secrets and variables &rarr; Actions, never in tracked files.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Value</th><th>Client-safe?</th><th>Lives where locally</th><th>Lives where in production</th><th>In <code>.env.example</code>?</th></tr></thead>
+    <tbody>
+      <tr><td>Git credentials (SSH key / PAT)</td><td>No — server-only, personal to each developer</td><td>Local SSH agent / keychain</td><td>n/a — never stored in the repo</td><td>No</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Real secrets are never committed to this repository. There is currently nothing that qualifies as a repo secret.</p>
+
+  <h2 id="escape">Escape hatch</h2>
+  <p><strong>Lock-in: Low.</strong> Git history is portable by design — <code>git remote</code> can point anywhere. Issues, PR discussion, and Actions configuration are the only GitHub-specific artifacts, and none of those exist in a load-bearing way yet.</p>
+  <p>Migrating off GitHub would mean pushing the existing history to a new remote and, if adopted later, re-creating any GitHub Actions workflows in the new host's equivalent format. This is a same-day task at current project size.</p>
+
+  <h2 id="scale">Cost &amp; scale checkpoints</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Scale</th><th>What breaks</th></tr></thead>
+    <tbody>
+      <tr><td>~10 users</td><td>Nothing — users of the app never touch GitHub. This only affects people with repo access.</td></tr>
+      <tr><td>~100 users</td><td>Still nothing on the free tier for hosting; if GitHub Pages-on-private is wanted, that's when Pro's $4/mo becomes relevant.</td></tr>
+      <tr><td>~1,000 users</td><td>No change — repo hosting cost is independent of app user count entirely.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="teammate">Teammate delta</h2>
+  <p>Free private repos on GitHub allow unlimited collaborators, so adding a second person costs nothing and requires no plan change.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Extra seat cost</td><td>$0 — free tier allows unlimited collaborators on private repos.</td></tr>
+      <tr><td>Permission model</td><td>Repo Settings &rarr; Collaborators and teams &rarr; invite by username, assign read/write/admin.</td></tr>
+      <tr><td>Free tier allows another member?</td><td>Yes, no restriction.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Run the verification checklist above once, to confirm the repo is actually configured the way this doc assumes.</li>
+    <li>Leave GitHub Actions and Pages-on-private alone until their own triggers fire — see <a href="github-actions.html">github-actions.html</a>.</li>
+    <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

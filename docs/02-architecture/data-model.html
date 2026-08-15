@@ -22,7 +22,7 @@
 
 <main>
   <div class="pagehead">
-    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 02-architecture &rsaquo; Data Model</div>
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; 02-architecture &rsaquo; Data Model</div>
     <h1>Data Model</h1>
   </div>
 
@@ -34,7 +34,6 @@
   <h2 id="source-model">1. As specified in the source diagrams</h2>
   <p>This is the only field-level source that exists (<code>0.2.x</code> CRDs, <code>MTGCRD.drawio</code>). Reproduced verbatim, unresolved types included, as the raw source-of-record. Do not treat this block as current — see section 2 for the resolved model.</p>
 
-  <div class="tablewrap">
   <pre><code>Game
   - gameId: UUID
   - randomSeed: ?          &lt;-- type unresolved in source
@@ -95,7 +94,6 @@ CardLayout  (from prose, not diagrammed with fields)
 enum ZoneType   = LIBRARY, HAND, BATTLEFIELD, ... ("etc")
 enum ActionType = SIMPLE, COMPLEX
 enum CounterType = PLUS_ONE_PLUS_ONE, POISON, OIL, ... ("etc")</code></pre>
-  </div>
 
   <div class="tablewrap">
   <table>

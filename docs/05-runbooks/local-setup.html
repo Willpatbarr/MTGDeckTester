@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local Setup — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#prereqs">Prerequisites</a>
+    <a href="#steps">Clone to running</a>
+    <a href="#folders">Folder layout</a>
+    <a href="#verify">Verification</a>
+    <a href="#troubleshooting">Troubleshooting</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; 05-runbooks &rsaquo; Local Setup</div>
+    <h1>Local Setup</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the steps to get MTG Deck Tester from a fresh clone to running in the simulator. &nbsp;<strong>What to do with it:</strong> follow it top to bottom the first time; use the troubleshooting table when a step doesn't behave.</p>
+
+  <div class="callout">
+    <span class="label">Not real yet</span>
+    <p>No Swift code exists in this repo today &mdash; the Xcode project itself is <a href="../04-plan/milestones.html">M1</a> work. This runbook describes the setup <strong>as designed</strong>. It becomes literally accurate the moment M1 lands; until then, treat it as the target.</p>
+  </div>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Clone the repo, open it in Xcode, sign it with your own free Apple ID, set one environment variable, and let the first launch download the Scryfall card database before you test with the sample decklist.</p>
+
+  <h2 id="prereqs">Prerequisites</h2>
+  <ul>
+    <li>A Mac running a recent macOS release.</li>
+    <li>The current stable release of Xcode, installed from the App Store.</li>
+    <li>An Apple ID. A free personal Apple ID is enough &mdash; this is the T0 path. The paid Apple Developer Program is not needed for local development; see <a href="deploy.html">deploy.html</a> and <a href="../03-services/apple-developer.html">apple-developer.html</a> for when it becomes required.</li>
+    <li>A stable internet connection for the first launch (the Scryfall bulk download, see step 6).</li>
+  </ul>
+
+  <h2 id="steps">Clone to running</h2>
+  <ol>
+    <li>
+      <p><strong>Clone the repo.</strong></p>
+      <div class="tablewrap">
+      <table>
+        <tbody><tr><td><code>git clone https://github.com/Willpatbarr/MTGDeckTester.git</code></td></tr></tbody>
+      </table>
+      </div>
+    </li>
+    <li><strong>Open the project.</strong> Open <code>MTGDeckTester.xcodeproj</code> (or the workspace, once M1 establishes the project) in Xcode.</li>
+    <li><strong>Set your own Team.</strong> In the project settings, go to <em>Signing &amp; Capabilities</em> and pick your own Apple ID under <em>Team</em>. Xcode will generate a personal signing certificate automatically &mdash; no paid account required at this stage.</li>
+    <li><strong>Set the Scryfall user agent.</strong> Edit the run scheme (<em>Product &rsaquo; Scheme &rsaquo; Edit Scheme &rsaquo; Run &rsaquo; Arguments &rsaquo; Environment Variables</em>) and add <code>SCRYFALL_USER_AGENT</code> with a descriptive value, e.g. <code>MTGDeckTester/0.1 (your-contact-info)</code>. Scryfall asks for this on every request &mdash; see <a href="../03-services/scryfall.html">scryfall.html</a>.</li>
+    <li><strong>Build and run on the simulator.</strong> Pick any iPhone simulator target and run.</li>
+    <li>
+      <strong>Wait through the first-launch download.</strong>
+      <div class="callout">
+        <span class="label">This takes a while</span>
+        <p>On first launch the app downloads Scryfall's <code>default_cards</code> bulk data file and parses it into local storage. Decompressed, this is roughly <strong>150 MB</strong>. On a slow connection this can take several minutes &mdash; let it finish before assuming something is broken.</p>
+      </div>
+    </li>
+  </ol>
+
+  <h2 id="folders">Folder layout, once M1 creates it</h2>
+  <p>The agreed convention (see <a href="../02-architecture/conventions.html">conventions.html</a>) so the project doesn't drift while it's being built out:</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Folder</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td><code>Models/</code></td><td><code>CardDefinition</code>, <code>GameCard</code>, <code>Player</code>, <code>Zone</code>, <code>Game</code>, <code>GameAction</code>, and the rest of the data model.</td></tr>
+      <tr><td><code>Views/</code></td><td>SwiftUI views &mdash; battlefield, enlarged card, ordered zone viewer, tokens, command zone.</td></tr>
+      <tr><td><code>ViewModels/</code></td><td>Observable state adapters. No rules logic lives here.</td></tr>
+      <tr><td><code>Engines/GameEngine/</code></td><td>Engine Interface, Game Flow Coordinator, Action Processor, Rules System, History System, Game State Store.</td></tr>
+      <tr><td><code>Engines/AIEngine/</code></td><td>AI Interface, Game Knowledge View, Action Generator, Action Evaluator, Decision Selector.</td></tr>
+      <tr><td><code>Database/</code></td><td>Database API and Storage &mdash; decks, card cache, game saves.</td></tr>
+      <tr><td><code>CardAPI/</code></td><td>Scryfall client and image cache.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="verify">Verification</h2>
+  <p>Setup is confirmed working when this succeeds:</p>
+  <ol>
+    <li>Import the sample decklist checked into the repo.</li>
+    <li>Open the deck detail view.</li>
+    <li>Confirm every resolvable card renders with its correct name, mana cost, type line, and cached image.</li>
+  </ol>
+
+  <h2 id="troubleshooting">Troubleshooting</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Build fails with a signing error</td><td>No Team selected in Signing &amp; Capabilities</td><td>Set your own Apple ID as the Team (step 3). A free Apple ID is enough; you do not need the paid Developer Program yet.</td></tr>
+      <tr><td>App hangs or crashes on first launch</td><td>The Scryfall bulk download was interrupted (network drop, app backgrounded, simulator killed)</td><td>Relaunch. The ingest re-checks and resumes/restarts the bulk fetch rather than assuming a partial file is complete.</td></tr>
+      <tr><td>A card in your decklist never resolves</td><td>Name mismatch against Scryfall, or a transient lookup failure</td><td>This is expected for some real decklists. It's handled by the unresolved-card retry flow (G6) &mdash; the card shows in a "needs attention" row in deck detail with a retry and a manual-search action.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Run through the verification steps above once the app builds.</li>
+    <li>If you're setting up as a second person, read <a href="onboarding.html">onboarding.html</a> first.</li>
+    <li>When you're ready to ship a build to someone else, read <a href="deploy.html">deploy.html</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

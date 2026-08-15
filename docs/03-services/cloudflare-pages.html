@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloudflare Pages — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#what-why">What &amp; why</a>
+    <a href="#trigger">Adoption trigger</a>
+    <a href="#free-tier">Free tier reality</a>
+    <a href="#setup">Setup steps</a>
+    <a href="#secrets">Secrets &amp; config</a>
+    <a href="#escape">Escape hatch</a>
+    <a href="#scale">Cost &amp; scale checkpoints</a>
+    <a href="#teammate">Teammate delta</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; <a href="index.html">03-services</a> &rsaquo; Cloudflare Pages</div>
+    <h1>Cloudflare Pages</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the host that turns <code>docs/</code> into a live site on every push to <code>main</code>. &nbsp;<strong>What to do with it:</strong> set it up once per the steps below; after that it's fire-and-forget.</p>
+
+  <h2 id="what-why">What &amp; why</h2>
+  <p>Cloudflare Pages watches the GitHub repo and rebuilds a static site from the <code>docs/</code> folder every time <code>main</code> changes, giving this planning documentation a real URL instead of living only as files in a private repo. There is no build step — it's plain HTML/CSS being served as-is.</p>
+  <p>Alternatives considered: GitHub Pages (works, but Pages on a private repo requires a paid GitHub plan — see <a href="github.html">github.html</a> — so it's the documented fallback rather than the primary) and Netlify (functionally near-identical free tier, no reason to prefer it over Cloudflare here). Cloudflare Pages won because it serves private-repo static sites for free with generous bandwidth and no plan upgrade needed.</p>
+
+  <h2 id="trigger">Adoption trigger</h2>
+  <div class="callout">
+    <span class="label">Adoption trigger</span>
+    <p><span class="prio must">T0 — Now</span> Cheap and immediate — point it at the repo, no build command, output directory <code>docs</code>. There's no reason to defer something this close to zero-cost.</p>
+  </div>
+
+  <h2 id="free-tier">Free tier reality</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Limit</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Builds</td><td>500 builds/month.</td></tr>
+      <tr><td>Bandwidth</td><td>Unlimited requests and bandwidth on the free tier.</td></tr>
+      <tr><td>Custom domains</td><td>Up to 100 custom domains.</td></tr>
+      <tr><td>Private repos</td><td>Supported — a private GitHub repo works fine as a Pages source.</td></tr>
+      <tr><td>What happens when exceeded</td><td>Builds beyond 500/month queue or are blocked until the next billing cycle — a soft throttle, not a bill. At roughly one push per active work session, 500/month is not a realistic ceiling for a solo project.</td></tr>
+      <tr><td>First paid tier</td><td>Not needed at this project's scale; verify current Pages Pro pricing at signup if it ever becomes relevant.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="setup">Setup steps</h2>
+  <ol>
+    <li>Create or sign in to a Cloudflare account.</li>
+    <li>Workers &amp; Pages &rarr; Create application &rarr; Pages &rarr; Connect to Git.</li>
+    <li>Authorize Cloudflare's GitHub App and select <code>Willpatbarr/MTGDeckTester</code> (a private repo — this is supported).</li>
+    <li>Production branch: <code>main</code>. Build command: none (leave blank). Build output directory: <code>docs</code>.</li>
+    <li>Deploy. Cloudflare assigns a default <code>*.pages.dev</code> subdomain automatically — no custom domain is required to get a working URL.</li>
+    <li><strong>Verification:</strong> visit the assigned <code>*.pages.dev</code> URL and confirm <code>docs/index.html</code> renders; then push a trivial commit to <code>main</code> and confirm the live site updates within about a minute.</li>
+  </ol>
+
+  <div class="callout">
+    <span class="label">Painful to change later</span>
+    <p>The output directory (<code>docs</code>) and production branch (<code>main</code>) are cheap to change in Cloudflare's dashboard, but a custom domain, once attached, involves DNS propagation delay to move. None of that is in play yet — the default <code>*.pages.dev</code> subdomain is sufficient for now.</p>
+  </div>
+
+  <h2 id="secrets">Secrets &amp; config</h2>
+  <p>No application secrets are involved — this is a static site with no build step and no environment-dependent behavior.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Value</th><th>Client-safe?</th><th>Lives where locally</th><th>Lives where in production</th><th>In <code>.env.example</code>?</th></tr></thead>
+    <tbody>
+      <tr><td>None</td><td>n/a</td><td>n/a</td><td>n/a</td><td>No entry needed</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Real secrets are never committed to the repository. This service has none to begin with.</p>
+
+  <h2 id="escape">Escape hatch</h2>
+  <p><strong>Lock-in: Low.</strong> The entire site is static HTML with a single shared stylesheet and a small nav script — no Cloudflare-specific templating or functions are used.</p>
+  <p>Migrating off Cloudflare Pages means pointing any other static host (GitHub Pages once paid, Netlify, or even <code>caddy file-server</code> run from the repo) at the same <code>docs/</code> folder. It renders identically anywhere; this is a same-day change.</p>
+
+  <h2 id="scale">Cost &amp; scale checkpoints</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Scale</th><th>What breaks</th></tr></thead>
+    <tbody>
+      <tr><td>~10 users</td><td>Nothing — app users don't visit this site; it's for the developer and collaborators.</td></tr>
+      <tr><td>~100 users</td><td>Still nothing — bandwidth is unlimited on the free tier regardless of visitor count.</td></tr>
+      <tr><td>~1,000 users</td><td>No change. The 500 builds/month cap is a function of how often docs are pushed, not how many people read them.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="teammate">Teammate delta</h2>
+  <p>A second person doesn't need Cloudflare access at all to read the site — it's public by default at its <code>*.pages.dev</code> URL. They only need Cloudflare dashboard access if they'll be changing deploy settings.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Extra seat cost</td><td>$0 — Cloudflare account member invites are free on the free plan.</td></tr>
+      <tr><td>Permission model</td><td>Account-level member roles, invited by email from the Cloudflare dashboard.</td></tr>
+      <tr><td>Free tier allows another member?</td><td>Yes.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Run the setup steps above — this service is currently marked "not set up" and is T0.</li>
+    <li>Confirm the docs site is reachable at its <code>*.pages.dev</code> URL after setup.</li>
+    <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

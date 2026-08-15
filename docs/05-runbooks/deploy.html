@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploy — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#docs-path">Docs path</a>
+    <a href="#app-path">App path</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../hub.html">Project hub</a> &rsaquo; 05-runbooks &rsaquo; Deploy</div>
+    <h1>Deploy</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> how a change reaches the outside world, for the docs site and for the app. &nbsp;<strong>What to do with it:</strong> follow the docs path any time you edit <code>docs/</code>; the app path is not usable yet.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">There are two entirely independent deploy paths &mdash; docs go live automatically about a minute after a commit to <code>main</code>, while the app path through TestFlight is fully specified but does not exist yet.</p>
+
+  <div class="callout">
+    <span class="label">Two unrelated paths</span>
+    <p>The docs path and the app path share no infrastructure, no trigger, and no timing. Deploying docs never touches the app, and there is currently no way to trigger the app path at all &mdash; see the callout under <a href="#app-path">App</a>.</p>
+  </div>
+
+  <h2 id="docs-path">1. Docs</h2>
+  <p>Commit to <code>main</code>. The docs site rebuilds automatically from the <code>docs/</code> folder and is live in about a minute. No build step, no manual publish action.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Option</th><th>Config</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>GitHub Pages</td><td>Serve from branch <code>main</code>, folder <code>/docs</code></td><td>Pages on a <strong>private</strong> repo requires a paid GitHub plan. See <a href="../03-services/github.html">github.html</a>.</td></tr>
+      <tr><td>Cloudflare Pages <em>(documented fallback)</em></td><td>Build command: <code>none</code> &middot; Output directory: <code>docs</code></td><td>Free on a private repo. See <a href="../03-services/cloudflare-pages.html">cloudflare-pages.html</a>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="app-path">2. App</h2>
+  <div class="callout">
+    <span class="label">Does not exist yet</span>
+    <p>The app path is gated behind the <strong>Apple Developer Program</strong>, a T1 service (see <a href="../03-services/apple-developer.html">apple-developer.html</a>) that is not enrolled in today. Stated plainly: <strong>there is currently no way to ship this app to anyone.</strong> This section describes the path as designed, to be executed at milestone M7.</p>
+  </div>
+
+  <ol>
+    <li>Xcode &rsaquo; Product &rsaquo; Archive.</li>
+    <li>Organizer &rsaquo; Distribute App &rsaquo; TestFlight &amp; App Store.</li>
+    <li>Apple processes the build. This typically takes 5&ndash;30 minutes.</li>
+    <li>Testers receive the new build through the TestFlight app on their own device.</li>
+  </ol>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>For docs changes: just commit to <code>main</code> and check the site in about a minute.</li>
+    <li>For the app path: nothing to do until M7 &mdash; enroll in the Apple Developer Program first (see <a href="../03-services/apple-developer.html">apple-developer.html</a>).</li>
+    <li>If you're setting this up for the first time, confirm which hosting option (GitHub Pages vs. Cloudflare Pages) is actually configured in <a href="../03-services/index.html">03-services</a> before assuming either is live.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>
