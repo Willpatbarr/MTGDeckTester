@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MTG Deck Tester — Architecture Map</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:#14171a; --card:#1d2126; --ink:#e8eaed; --muted:#a4acb5; --faint:#737c86;
+    --border:#2b3138; --border-strong:#3a424b; --accent:#6cc394; --accent-soft:#1c3128;
+    --warn:#e0a458; --warn-soft:#33280f;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35); --radius:14px;
+
+    /* Role fills (muted, dark-appropriate) */
+    --f-ui:#1e3a5f;     --s-ui:#7ab0ff;
+    --f-engine:#1e4620; --s-engine:#82c98a;
+    --f-data:#4a3010;   --s-data:#e0a050;
+    --f-ai:#332b52;     --s-ai:#a99cf0;
+    --f-store:#123a3a;  --s-store:#5fc9c9;
+    --f-ext:#2b3138;    --s-ext:#9aa4ad;
+    --f-sub:#20262c;    --s-sub:#3a424b;
+  }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 system-ui, sans-serif; }
+  header { max-width:1060px; margin:0 auto; padding:28px 24px 6px 224px; }
+  header h1 { font-size:19px; margin:0; }
+  header p  { margin:6px 0 0; color:var(--muted); font-size:12.5px; }
+  .legend { margin-top:10px; display:flex; flex-wrap:wrap; gap:12px; font-size:11.5px; color:var(--muted); }
+  .legend span { display:inline-flex; align-items:center; gap:5px; }
+  .legend i { width:11px; height:11px; border-radius:3px; display:inline-block; border:1px solid; }
+
+  .skipto {
+    position:fixed; top:50%; left:18px; transform:translateY(-50%);
+    z-index:60; display:flex; flex-direction:column; gap:5px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:12px 12px 13px; box-shadow:var(--shadow);
+    width:186px; max-height:82vh; overflow:auto;
+  }
+  .skipto a { text-decoration:none; color:var(--muted); font-size:13px;
+              padding:6px 10px; border-radius:8px; transition:.15s; display:block; }
+  .skipto a:hover { background:var(--bg); color:var(--accent); }
+  .skipto a.active { background:var(--accent-soft); color:var(--accent); }
+  .skipto a.sub { padding-left:22px; font-size:12.5px; }
+  .skipto a.sub2 { padding-left:34px; font-size:12px; }
+  @media (max-width:1180px) {
+    .skipto { top:0; left:0; right:0; transform:none; width:auto; max-height:none;
+      flex-direction:row; overflow-x:auto; border-radius:0; border-width:0 0 1px; }
+    header, main { padding-left:24px; }
+  }
+
+  main { max-width:1060px; margin:0 auto; padding:8px 24px 80px 224px; }
+  section.diagram {
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 22px; margin:26px 0; scroll-margin-top:20px;
+  }
+  section.diagram h2 { font-size:15px; margin:0 0 2px; }
+  section.diagram .caption { margin:0 0 12px; color:var(--muted); font-size:12.5px; }
+  section.diagram.flash { border-color:var(--accent); }
+
+  svg { display:block; }
+  svg text { fill:var(--ink); font:13px system-ui, sans-serif; }
+  .shape { fill:var(--bg); stroke:var(--border-strong); stroke-width:1.5; }
+  .edge  { stroke:var(--faint); stroke-width:1.5; fill:none; }
+  .edge-label { font-size:11px; fill:var(--muted); }
+  .container-box { fill:none; stroke:var(--border-strong); stroke-width:1.5; stroke-dasharray:2 4; }
+  .grp-label { font-size:12.5px; font-weight:600; fill:var(--muted); }
+  .cls-name { font-weight:600; font-size:12.5px; }
+  .cls-attr { font-size:11px; fill:var(--muted); }
+  .cls-sep  { stroke:var(--border-strong); stroke-width:1; }
+  .mult { font-size:10.5px; fill:var(--muted); }
+
+  .comp-ui .shape     { fill:var(--f-ui);     stroke:var(--s-ui); }
+  .comp-engine .shape { fill:var(--f-engine); stroke:var(--s-engine); }
+  .comp-data .shape   { fill:var(--f-data);   stroke:var(--s-data); }
+  .comp-ai .shape     { fill:var(--f-ai);     stroke:var(--s-ai); }
+  .comp-store .shape  { fill:var(--f-store);  stroke:var(--s-store); }
+  .comp-ext .shape    { fill:var(--f-ext);    stroke:var(--s-ext); }
+  .comp-sub .shape    { fill:var(--f-sub);    stroke:var(--s-sub); }
+  .node.neighbor .shape { opacity:.5; }
+  .node.neighbor text   { opacity:.75; }
+
+  .node { transform-box:fill-box; transform-origin:center;
+          transition:transform .15s ease, filter .15s ease; }
+  .node.clickable { cursor:pointer; }
+  .node.clickable:hover {
+    transform:translateY(-2px) scale(1.03);
+    filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <path d="M0 0 L10 5 L0 10 z" fill="var(--faint)"/>
+  </marker>
+  <marker id="assoc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto">
+    <path d="M0 0 L10 5 L0 10" fill="none" stroke="var(--faint)" stroke-width="1.4"/>
+  </marker>
+  <marker id="tri" viewBox="0 0 14 14" refX="13" refY="7" markerWidth="15" markerHeight="15" orient="auto">
+    <path d="M0 1 L14 7 L0 13 z" fill="var(--card)" stroke="var(--faint)" stroke-width="1.2"/>
+  </marker>
+  <marker id="dia-f" viewBox="0 0 16 10" refX="15" refY="5" markerWidth="17" markerHeight="11" orient="auto">
+    <path d="M0 5 L8 0 L16 5 L8 10 z" fill="var(--faint)"/>
+  </marker>
+  <marker id="dia-o" viewBox="0 0 16 10" refX="15" refY="5" markerWidth="17" markerHeight="11" orient="auto">
+    <path d="M0 5 L8 0 L16 5 L8 10 z" fill="var(--card)" stroke="var(--faint)" stroke-width="1.2"/>
+  </marker>
+</defs></svg>
+
+<nav class="skipto" id="toc">
+  <a href="#d-root">MTG Deck Tester</a>
+  <a href="#d-game-engine" class="sub">GameEngine</a>
+  <a href="#d-battlefield-ui" class="sub">Battlefield UI</a>
+  <a href="#d-enlarged-card-view" class="sub2">Enlarged Card View</a>
+  <a href="#d-zones-search" class="sub">Zones, Search & Inspection</a>
+  <a href="#d-tokens" class="sub">Tokens</a>
+  <a href="#d-history-persistence-ai" class="sub">History, Persistence & AI</a>
+  <a href="#d-data-model" class="sub">Data Model</a>
+  <!-- ARCHMAP:TOC-END -->
+</nav>
+
+<header>
+  <h1>MTG Deck Tester — Architecture Map</h1>
+  <p>Component notation per UML (data model as class diagram) · from Product Spec v1.0 · generated 2026-07-21 · click a component to drill in</p>
+  <div class="legend">
+    <span><i style="background:var(--f-ui);border-color:var(--s-ui)"></i>UI / Views</span>
+    <span><i style="background:var(--f-engine);border-color:var(--s-engine)"></i>GameEngine</span>
+    <span><i style="background:var(--f-store);border-color:var(--s-store)"></i>DeckStore</span>
+    <span><i style="background:var(--f-ai);border-color:var(--s-ai)"></i>AI / BotEngine</span>
+    <span><i style="background:var(--f-data);border-color:var(--s-data)"></i>Models</span>
+    <span><i style="background:var(--f-ext);border-color:var(--s-ext)"></i>External</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================ 1. SYSTEM OVERVIEW ============================ -->
+<section class="diagram" id="d-root" data-featured="root">
+  <h2>MTG Deck Tester — top level</h2>
+  <p class="caption">The core layering from the spec: Views → DeckStore / GameEngine / BotEngine → Models. UI sub-areas and engine internals live in their own diagrams; only the major zones are shown here.</p>
+  <svg viewBox="0 0 830 560" width="100%" role="img" aria-label="System overview">
+    <!-- Views container -->
+    <rect class="container-box" x="40" y="56" width="500" height="184" rx="12"/>
+    <text class="grp-label" x="56" y="78">Views (SwiftUI UI Layer)</text>
+
+    <!-- edges (drawn before node boxes) -->
+    <path class="edge" data-pts="290,240 290,272 400,272 400,300" marker-end="url(#assoc)"/>
+    <text class="edge-label" x="300" y="266">commands</text>
+    <path class="edge" data-pts="540,150 582,150 582,178 620,178" marker-end="url(#assoc)"/>
+    <text class="edge-label" x="548" y="144">load decks</text>
+    <path class="edge" data-pts="695,208 695,335 500,335" marker-end="url(#assoc)"/>
+    <text class="edge-label" x="600" y="329">state</text>
+    <path class="edge" data-pts="695,150 695,110" marker-end="url(#assoc)"/>
+    <text class="edge-label" x="702" y="134">fetch</text>
+    <path class="edge" data-pts="600,335 500,335" marker-end="url(#assoc)"/>
+    <text class="edge-label" x="512" y="329">DecisionRequest</text>
+    <path class="edge" data-pts="400,370 400,438" marker-end="url(#arrow)"/>
+    <text class="edge-label" x="408" y="410">reads / mutates</text>
+
+    <!-- Views nested nodes -->
+    <g class="node" data-cid="battlefield-ui"><rect class="shape comp-ui" x="60" y="96" width="140" height="52" rx="8"/>
+      <text x="130" y="126" text-anchor="middle">Battlefield UI</text></g>
+    <g class="node" data-cid="enlarged-card-view"><rect class="shape comp-ui" x="220" y="96" width="140" height="52" rx="8"/>
+      <text x="290" y="118" text-anchor="middle"><tspan x="290" dy="0">Enlarged Card</tspan><tspan x="290" dy="1.2em">View</tspan></text></g>
+    <g class="node" data-cid="zones-search"><rect class="shape comp-ui" x="380" y="96" width="140" height="52" rx="8"/>
+      <text x="450" y="118" text-anchor="middle"><tspan x="450" dy="0">Ordered Zone</tspan><tspan x="450" dy="1.2em">Viewer / Search</tspan></text></g>
+    <g class="node" data-cid="tokens"><rect class="shape comp-ui" x="60" y="164" width="140" height="52" rx="8"/>
+      <text x="130" y="194" text-anchor="middle">Tokens UI</text></g>
+    <g class="node" data-cid="command-zone"><rect class="shape comp-sub" x="220" y="164" width="140" height="52" rx="8"/>
+      <text x="290" y="194" text-anchor="middle">Command Zone</text></g>
+    <g class="node" data-cid="ui-mana-turn"><rect class="shape comp-sub" x="380" y="164" width="140" height="52" rx="8"/>
+      <text x="450" y="188" text-anchor="middle"><tspan x="450" dy="0">Mana / Turn /</tspan><tspan x="450" dy="1.2em">Replay UI</tspan></text></g>
+
+    <!-- right column: external + store -->
+    <g class="node" data-cid="scryfall"><rect class="shape comp-ext" x="620" y="58" width="150" height="52" rx="8"/>
+      <text x="695" y="82" text-anchor="middle"><tspan x="695" dy="0">Scryfall</tspan><tspan x="695" dy="1.2em">(external API)</tspan></text></g>
+    <g class="node" data-cid="deck-store"><rect class="shape comp-store" x="620" y="150" width="150" height="58" rx="8"/>
+      <text x="695" y="175" text-anchor="middle"><tspan x="695" dy="0">DeckStore</tspan><tspan x="695" dy="1.2em">decklists + cache</tspan></text></g>
+
+    <!-- engine layer -->
+    <g class="node" data-cid="game-engine"><rect class="shape comp-engine" x="300" y="300" width="200" height="70" rx="8"/>
+      <text x="400" y="330" text-anchor="middle"><tspan x="400" dy="0">GameEngine</tspan><tspan x="400" dy="1.2em">rules core</tspan></text></g>
+    <g class="node" data-cid="bot-engine"><rect class="shape comp-ai" x="600" y="300" width="170" height="70" rx="8"/>
+      <text x="685" y="330" text-anchor="middle"><tspan x="685" dy="0">BotEngine (AI)</tspan><tspan x="685" dy="1.2em">opponents</tspan></text></g>
+
+    <!-- models -->
+    <g class="node" data-cid="models"><rect class="shape comp-data" x="250" y="438" width="300" height="66" rx="8"/>
+      <text x="400" y="465" text-anchor="middle"><tspan x="400" dy="0">Models</tspan><tspan x="400" dy="1.2em">CardDefinition · GameCard · Player · Zone · Game · GameAction</tspan></text></g>
+  </svg>
+</section>
+
+<!-- ============================ 2. GAMEENGINE ============================ -->
+<section class="diagram" id="d-game-engine" data-featured="game-engine">
+  <h2>GameEngine — rules core</h2>
+  <p class="caption">Featured: the rules engine and its subsystems (§2–§3). Humans and bots both act through the Decision Pipeline; the engine never lets the UI infer rules state. Combat, layers and mana are summarized here — deeper splits are candidates for /archmap add.</p>
+  <svg viewBox="0 0 900 500" width="100%" role="img" aria-label="GameEngine internals">
+    <rect class="container-box" x="40" y="86" width="640" height="392" rx="12"/>
+    <text class="grp-label" x="56" y="110">GameEngine</text>
+
+    <!-- neighbor edges -->
+    <path class="edge" data-pts="720,210 680,210" marker-end="url(#arrow)"/>
+    <text class="edge-label" x="686" y="204">reads/mutates</text>
+    <path class="edge" data-pts="720,330 680,330" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="686" y="324">DecisionRequest</text>
+
+    <!-- internal leaves: 3 cols x=60,270,480 (w=180); rows y=140,222,304,386 -->
+    <g class="node" data-cid="ge-turn"><rect class="shape comp-sub" x="60" y="140" width="180" height="56" rx="8"/>
+      <text x="150" y="164" text-anchor="middle"><tspan x="150" dy="0">Turn / Priority /</tspan><tspan x="150" dy="1.2em">Trigger handling</tspan></text></g>
+    <g class="node" data-cid="ge-sba"><rect class="shape comp-sub" x="270" y="140" width="180" height="56" rx="8"/>
+      <text x="360" y="164" text-anchor="middle"><tspan x="360" dy="0">State-Based</tspan><tspan x="360" dy="1.2em">Actions (SBAs)</tspan></text></g>
+    <g class="node" data-cid="ge-replacement"><rect class="shape comp-sub" x="480" y="140" width="180" height="56" rx="8"/>
+      <text x="570" y="164" text-anchor="middle"><tspan x="570" dy="0">Replacement &amp;</tspan><tspan x="570" dy="1.2em">Prevention</tspan></text></g>
+
+    <g class="node" data-cid="ge-layers"><rect class="shape comp-sub" x="60" y="222" width="180" height="56" rx="8"/>
+      <text x="150" y="246" text-anchor="middle"><tspan x="150" dy="0">Continuous Effects</tspan><tspan x="150" dy="1.2em">(Layer System)</tspan></text></g>
+    <g class="node" data-cid="ge-mana"><rect class="shape comp-sub" x="270" y="222" width="180" height="56" rx="8"/>
+      <text x="360" y="254" text-anchor="middle">Mana System</text></g>
+    <g class="node" data-cid="ge-combat"><rect class="shape comp-sub" x="480" y="222" width="180" height="56" rx="8"/>
+      <text x="570" y="254" text-anchor="middle">Combat System</text></g>
+
+    <g class="node" data-cid="ge-copy"><rect class="shape comp-sub" x="60" y="304" width="180" height="56" rx="8"/>
+      <text x="150" y="336" text-anchor="middle">Copy Effects</text></g>
+    <g class="node" data-cid="ge-zone-manager"><rect class="shape comp-sub" x="270" y="304" width="180" height="56" rx="8"/>
+      <text x="360" y="336" text-anchor="middle">Zone Manager</text></g>
+    <g class="node" data-cid="ge-token-pipeline"><rect class="shape comp-sub" x="480" y="304" width="180" height="56" rx="8"/>
+      <text x="570" y="328" text-anchor="middle"><tspan x="570" dy="0">Token Creation</tspan><tspan x="570" dy="1.2em">Pipeline</tspan></text></g>
+
+    <g class="node" data-cid="ge-decision"><rect class="shape comp-sub" x="60" y="386" width="180" height="56" rx="8"/>
+      <text x="150" y="410" text-anchor="middle"><tspan x="150" dy="0">Decision Pipeline</tspan><tspan x="150" dy="1.2em">(humans + bots)</tspan></text></g>
+    <g class="node" data-cid="history-persistence-ai"><rect class="shape comp-sub" x="270" y="386" width="180" height="56" rx="8"/>
+      <text x="360" y="410" text-anchor="middle"><tspan x="360" dy="0">Action History /</tspan><tspan x="360" dy="1.2em">Undo · Redo</tspan></text></g>
+    <g class="node" data-cid="ge-devmode"><rect class="shape comp-sub" x="480" y="386" width="180" height="56" rx="8"/>
+      <text x="570" y="410" text-anchor="middle"><tspan x="570" dy="0">Developer Mode</tspan><tspan x="570" dy="1.2em">(rule overrides)</tspan></text></g>
+
+    <!-- neighbors -->
+    <g class="node neighbor" data-cid="models"><rect class="shape comp-data" x="720" y="182" width="150" height="56" rx="8"/>
+      <text x="795" y="214" text-anchor="middle">Models</text></g>
+    <g class="node neighbor" data-cid="bot-engine"><rect class="shape comp-ai" x="720" y="302" width="150" height="56" rx="8"/>
+      <text x="795" y="334" text-anchor="middle">BotEngine (AI)</text></g>
+  </svg>
+</section>
+
+<!-- ============================ 3. BATTLEFIELD UI ============================ -->
+<section class="diagram" id="d-battlefield-ui" data-featured="battlefield-ui">
+  <h2>Battlefield UI</h2>
+  <p class="caption">Featured: the battlefield play surface (§5). Human field is freeform drag-and-drop; opponents use compact managed panels. Layout is UI-only and excluded from replay determinism.</p>
+  <svg viewBox="0 0 890 420" width="100%" role="img" aria-label="Battlefield UI">
+    <rect class="container-box" x="40" y="86" width="620" height="300" rx="12"/>
+    <text class="grp-label" x="56" y="110">Battlefield UI</text>
+
+    <path class="edge" data-pts="700,138 662,138" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="666" y="132">long-press</text>
+    <path class="edge" data-pts="700,228 662,228" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="666" y="222">grouping</text>
+    <path class="edge" data-pts="700,318 662,318" marker-end="url(#arrow)"/>
+    <text class="edge-label" x="666" y="312">CardLayout</text>
+
+    <!-- 3 cols x=60,270,480 (w=180); rows y=140,222,304 -->
+    <g class="node" data-cid="bf-human"><rect class="shape comp-ui" x="60" y="140" width="180" height="56" rx="8"/>
+      <text x="150" y="164" text-anchor="middle"><tspan x="150" dy="0">Human Battlefield</tspan><tspan x="150" dy="1.2em">(freeform, fixed)</tspan></text></g>
+    <g class="node" data-cid="bf-opponent"><rect class="shape comp-ui" x="270" y="140" width="180" height="56" rx="8"/>
+      <text x="360" y="164" text-anchor="middle"><tspan x="360" dy="0">Opponent Panels</tspan><tspan x="360" dy="1.2em">(collapsible)</tspan></text></g>
+    <g class="node" data-cid="bf-cardlayout"><rect class="shape comp-ui" x="480" y="140" width="180" height="56" rx="8"/>
+      <text x="570" y="164" text-anchor="middle"><tspan x="570" dy="0">CardLayout: spawn</tspan><tspan x="570" dy="1.2em">/ z-order / drag</tspan></text></g>
+
+    <g class="node" data-cid="bf-attachments"><rect class="shape comp-ui" x="60" y="222" width="180" height="56" rx="8"/>
+      <text x="150" y="246" text-anchor="middle"><tspan x="150" dy="0">Attachments</tspan><tspan x="150" dy="1.2em">(fan under host)</tspan></text></g>
+    <g class="node" data-cid="bf-counters"><rect class="shape comp-ui" x="270" y="222" width="180" height="56" rx="8"/>
+      <text x="360" y="246" text-anchor="middle"><tspan x="360" dy="0">Counter &amp; Damage</tspan><tspan x="360" dy="1.2em">badges</tspan></text></g>
+    <g class="node" data-cid="bf-status"><rect class="shape comp-ui" x="480" y="222" width="180" height="56" rx="8"/>
+      <text x="570" y="246" text-anchor="middle"><tspan x="570" dy="0">Card Status Display</tspan><tspan x="570" dy="1.2em">(P/T, quantity)</tspan></text></g>
+
+    <g class="node" data-cid="bf-token-grouping"><rect class="shape comp-ui" x="60" y="304" width="180" height="56" rx="8"/>
+      <text x="150" y="336" text-anchor="middle">Token Grouping</text></g>
+    <g class="node" data-cid="bf-turn-indicator"><rect class="shape comp-ui" x="270" y="304" width="180" height="56" rx="8"/>
+      <text x="360" y="336" text-anchor="middle">Active Turn Indicator</text></g>
+    <g class="node" data-cid="bf-annotations"><rect class="shape comp-sub" x="480" y="304" width="180" height="56" rx="8"/>
+      <text x="570" y="336" text-anchor="middle">Annotations (future)</text></g>
+
+    <!-- neighbors -->
+    <g class="node neighbor" data-cid="enlarged-card-view"><rect class="shape comp-ui" x="700" y="112" width="160" height="52" rx="8"/>
+      <text x="780" y="132" text-anchor="middle"><tspan x="780" dy="0">Enlarged Card</tspan><tspan x="780" dy="1.2em">View</tspan></text></g>
+    <g class="node neighbor" data-cid="tokens"><rect class="shape comp-ui" x="700" y="202" width="160" height="52" rx="8"/>
+      <text x="780" y="232" text-anchor="middle">Tokens</text></g>
+    <g class="node neighbor" data-cid="models"><rect class="shape comp-data" x="700" y="292" width="160" height="52" rx="8"/>
+      <text x="780" y="322" text-anchor="middle">Models</text></g>
+  </svg>
+</section>
+
+<!-- ============================ 4. ENLARGED CARD VIEW ============================ -->
+<section class="diagram" id="d-enlarged-card-view" data-featured="enlarged-card-view">
+  <h2>Enlarged Card View</h2>
+  <p class="caption">Featured: the persistent modal opened by long-pressing a battlefield card (§4). Supports inspection, counter edits and zone moves; it deliberately forbids tap/drag/attach. Stays open across zone changes until explicitly dismissed.</p>
+  <svg viewBox="0 0 840 420" width="100%" role="img" aria-label="Enlarged Card View">
+    <rect class="container-box" x="40" y="86" width="560" height="300" rx="12"/>
+    <text class="grp-label" x="56" y="110">Enlarged Card View</text>
+
+    <path class="edge" data-pts="640,138 600,138" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="606" y="132">opened from</text>
+    <path class="edge" data-pts="640,238 600,238" marker-end="url(#arrow)"/>
+    <text class="edge-label" x="606" y="232">move-zone</text>
+    <path class="edge" data-pts="640,338 600,338" marker-end="url(#arrow)"/>
+    <text class="edge-label" x="606" y="332">CounterStack</text>
+
+    <!-- 2 cols x=60,320 (w=230); rows y=140,220; wide row y=300 -->
+    <g class="node" data-cid="ecv-open"><rect class="shape comp-ui" x="60" y="140" width="230" height="56" rx="8"/>
+      <text x="175" y="164" text-anchor="middle"><tspan x="175" dy="0">Opening / Dismissal</tspan><tspan x="175" dy="1.2em">(long-press · tap-out · swipe)</tspan></text></g>
+    <g class="node" data-cid="ecv-actions"><rect class="shape comp-ui" x="320" y="140" width="230" height="56" rx="8"/>
+      <text x="435" y="164" text-anchor="middle"><tspan x="435" dy="0">Allowed vs Disallowed</tspan><tspan x="435" dy="1.2em">actions</tspan></text></g>
+    <g class="node" data-cid="ecv-counter"><rect class="shape comp-ui" x="60" y="220" width="230" height="56" rx="8"/>
+      <text x="175" y="244" text-anchor="middle"><tspan x="175" dy="0">Counter Management</tspan><tspan x="175" dy="1.2em">(shared CounterStack)</tspan></text></g>
+    <g class="node" data-cid="ecv-move"><rect class="shape comp-ui" x="320" y="220" width="230" height="56" rx="8"/>
+      <text x="435" y="244" text-anchor="middle"><tspan x="435" dy="0">Move Zone Action</tspan><tspan x="435" dy="1.2em">(ownership + placement)</tspan></text></g>
+    <g class="node" data-cid="ecv-lifecycle"><rect class="shape comp-ui" x="60" y="300" width="490" height="52" rx="8"/>
+      <text x="305" y="330" text-anchor="middle">Lifecycle — view survives the card changing zones; only user-dismiss closes it</text></g>
+
+    <!-- neighbors -->
+    <g class="node neighbor" data-cid="battlefield-ui"><rect class="shape comp-ui" x="640" y="112" width="170" height="52" rx="8"/>
+      <text x="725" y="142" text-anchor="middle">Battlefield UI</text></g>
+    <g class="node neighbor" data-cid="zones-search"><rect class="shape comp-ui" x="640" y="212" width="170" height="52" rx="8"/>
+      <text x="725" y="236" text-anchor="middle"><tspan x="725" dy="0">Zones, Search</tspan><tspan x="725" dy="1.2em">&amp; Inspection</tspan></text></g>
+    <g class="node neighbor" data-cid="models"><rect class="shape comp-data" x="640" y="312" width="170" height="52" rx="8"/>
+      <text x="725" y="342" text-anchor="middle">Models</text></g>
+  </svg>
+</section>
+
+<!-- ============================ 5. ZONES, SEARCH & INSPECTION ============================ -->
+<section class="diagram" id="d-zones-search" data-featured="zones-search">
+  <h2>Zones, Search &amp; Inspection</h2>
+  <p class="caption">Featured: the shared Ordered Zone Viewer and search system (§4). One viewer, configured per zone, is reused for libraries, hands, graveyards, exile, stack and the token picker. MVP search is text-only; hidden zones are fully inspectable for testing clarity.</p>
+  <svg viewBox="0 0 870 470" width="100%" role="img" aria-label="Zones, Search and Inspection">
+    <rect class="container-box" x="40" y="86" width="600" height="360" rx="12"/>
+    <text class="grp-label" x="56" y="110">Zones, Search &amp; Inspection</text>
+
+    <path class="edge" data-pts="680,148 640,148" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="646" y="142">picker reuses viewer</text>
+    <path class="edge" data-pts="680,258 640,258" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="646" y="252">move-zone</text>
+    <path class="edge" data-pts="680,368 640,368" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="646" y="362">Zone Manager</text>
+
+    <g class="node" data-cid="zv-viewer"><rect class="shape comp-ui" x="60" y="140" width="520" height="56" rx="8"/>
+      <text x="320" y="164" text-anchor="middle"><tspan x="320" dy="0">Ordered Zone Viewer (shared)</tspan><tspan x="320" dy="1.2em">per-zone behavior config · preserves natural order</tspan></text></g>
+    <g class="node" data-cid="zv-perzone"><rect class="shape comp-ui" x="60" y="220" width="520" height="56" rx="8"/>
+      <text x="320" y="244" text-anchor="middle"><tspan x="320" dy="0">Per-Zone Behavior</tspan><tspan x="320" dy="1.2em">Library · Hand · Graveyard · Exile (tags) · Stack (reorder) · Command</tspan></text></g>
+    <g class="node" data-cid="zv-library-search"><rect class="shape comp-ui" x="60" y="300" width="250" height="56" rx="8"/>
+      <text x="185" y="324" text-anchor="middle"><tspan x="185" dy="0">Library Search UI</tspan><tspan x="185" dy="1.2em">(shows all; no legality filter)</tspan></text></g>
+    <g class="node" data-cid="zv-shared-search"><rect class="shape comp-ui" x="330" y="300" width="250" height="56" rx="8"/>
+      <text x="455" y="324" text-anchor="middle"><tspan x="455" dy="0">Shared Search System</tspan><tspan x="455" dy="1.2em">(reused across lists)</tspan></text></g>
+    <g class="node" data-cid="zv-behavior"><rect class="shape comp-sub" x="60" y="380" width="520" height="50" rx="8"/>
+      <text x="320" y="410" text-anchor="middle">Search behavior — opens empty · no auto-focus · text-only · filters, never re-sorts</text></g>
+
+    <!-- neighbors -->
+    <g class="node neighbor" data-cid="tokens"><rect class="shape comp-ui" x="680" y="122" width="160" height="52" rx="8"/>
+      <text x="760" y="152" text-anchor="middle">Tokens</text></g>
+    <g class="node neighbor" data-cid="enlarged-card-view"><rect class="shape comp-ui" x="680" y="232" width="160" height="52" rx="8"/>
+      <text x="760" y="252" text-anchor="middle"><tspan x="760" dy="0">Enlarged Card</tspan><tspan x="760" dy="1.2em">View</tspan></text></g>
+    <g class="node neighbor" data-cid="game-engine"><rect class="shape comp-engine" x="680" y="342" width="160" height="52" rx="8"/>
+      <text x="760" y="372" text-anchor="middle">GameEngine</text></g>
+  </svg>
+</section>
+
+<!-- ============================ 6. TOKENS ============================ -->
+<section class="diagram" id="d-tokens" data-featured="tokens">
+  <h2>Tokens</h2>
+  <p class="caption">Featured: token behavior and creation (§6). Tokens are GameCards with isToken = true and behave exactly like permanents; grouping is a purely visual arrangement. Manual and automatic creation share one engine pipeline.</p>
+  <svg viewBox="0 0 850 420" width="100%" role="img" aria-label="Tokens">
+    <rect class="container-box" x="40" y="86" width="580" height="300" rx="12"/>
+    <text class="grp-label" x="56" y="110">Tokens</text>
+
+    <path class="edge" data-pts="660,148 620,148" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="626" y="142">creation pipeline</text>
+    <path class="edge" data-pts="660,258 620,258" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="626" y="252">same layout model</text>
+    <path class="edge" data-pts="660,368 620,368" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="626" y="362">reuses viewer</text>
+
+    <g class="node" data-cid="tk-behavior"><rect class="shape comp-ui" x="60" y="140" width="510" height="56" rx="8"/>
+      <text x="315" y="164" text-anchor="middle"><tspan x="315" dy="0">Token Behavior</tspan><tspan x="315" dy="1.2em">same UI as permanents · isToken = true · removed by normal gameplay</tspan></text></g>
+    <g class="node" data-cid="tk-grouping"><rect class="shape comp-ui" x="60" y="220" width="240" height="56" rx="8"/>
+      <text x="180" y="244" text-anchor="middle"><tspan x="180" dy="0">Token Grouping</tspan><tspan x="180" dy="1.2em">(Auto Group · quantity)</tspan></text></g>
+    <g class="node" data-cid="tk-picker"><rect class="shape comp-ui" x="330" y="220" width="240" height="56" rx="8"/>
+      <text x="450" y="244" text-anchor="middle"><tspan x="450" dy="0">Manual Token Picker</tspan><tspan x="450" dy="1.2em">(quantity · controller)</tspan></text></g>
+    <g class="node" data-cid="tk-pipeline"><rect class="shape comp-ui" x="60" y="300" width="240" height="56" rx="8"/>
+      <text x="180" y="324" text-anchor="middle"><tspan x="180" dy="0">Creation Pipeline</tspan><tspan x="180" dy="1.2em">(shared: auto + manual)</tspan></text></g>
+    <g class="node" data-cid="tk-provenance"><rect class="shape comp-sub" x="330" y="300" width="240" height="56" rx="8"/>
+      <text x="450" y="324" text-anchor="middle"><tspan x="450" dy="0">Provenance</tspan><tspan x="450" dy="1.2em">(no source recorded, MVP)</tspan></text></g>
+
+    <!-- neighbors -->
+    <g class="node neighbor" data-cid="game-engine"><rect class="shape comp-engine" x="660" y="122" width="160" height="52" rx="8"/>
+      <text x="740" y="152" text-anchor="middle">GameEngine</text></g>
+    <g class="node neighbor" data-cid="battlefield-ui"><rect class="shape comp-ui" x="660" y="232" width="160" height="52" rx="8"/>
+      <text x="740" y="262" text-anchor="middle">Battlefield UI</text></g>
+    <g class="node neighbor" data-cid="zones-search"><rect class="shape comp-ui" x="660" y="342" width="160" height="52" rx="8"/>
+      <text x="740" y="366" text-anchor="middle"><tspan x="740" dy="0">Ordered Zone</tspan><tspan x="740" dy="1.2em">Viewer</tspan></text></g>
+  </svg>
+</section>
+
+<!-- ============================ 7. HISTORY, PERSISTENCE & AI ============================ -->
+<section class="diagram" id="d-history-persistence-ai" data-featured="history-persistence-ai">
+  <h2>History, Persistence &amp; AI</h2>
+  <p class="caption">Featured: the deterministic-action features (§7). Ordered, reversible GameActions power undo/redo, save/load and deterministic replay. The AI (BotEngine) plans through the same DecisionRequest pipeline as humans and never mutates state directly.</p>
+  <svg viewBox="0 0 870 430" width="100%" role="img" aria-label="History, Persistence and AI">
+    <rect class="container-box" x="40" y="86" width="600" height="314" rx="12"/>
+    <text class="grp-label" x="56" y="110">History, Persistence &amp; AI</text>
+
+    <path class="edge" data-pts="680,168 640,168" marker-start="url(#assoc)"/>
+    <text class="edge-label" x="646" y="162">GameAction history</text>
+    <path class="edge" data-pts="680,298 640,298" marker-end="url(#arrow)"/>
+    <text class="edge-label" x="646" y="292">Game / GameAction</text>
+
+    <!-- 3 cols x=60,250,440 (w=170); rows y=140,222,304 -->
+    <g class="node" data-cid="hp-undo"><rect class="shape comp-engine" x="60" y="140" width="170" height="56" rx="8"/>
+      <text x="145" y="172" text-anchor="middle">Undo System</text></g>
+    <g class="node" data-cid="hp-redo"><rect class="shape comp-engine" x="250" y="140" width="170" height="56" rx="8"/>
+      <text x="335" y="172" text-anchor="middle">Redo System</text></g>
+    <g class="node" data-cid="hp-multiundo"><rect class="shape comp-engine" x="440" y="140" width="170" height="56" rx="8"/>
+      <text x="525" y="172" text-anchor="middle">Multi-Step Undo</text></g>
+
+    <g class="node" data-cid="hp-save"><rect class="shape comp-engine" x="60" y="222" width="170" height="56" rx="8"/>
+      <text x="145" y="246" text-anchor="middle"><tspan x="145" dy="0">Save / Load</tspan><tspan x="145" dy="1.2em">(serialize anytime)</tspan></text></g>
+    <g class="node" data-cid="hp-replay"><rect class="shape comp-engine" x="250" y="222" width="170" height="56" rx="8"/>
+      <text x="335" y="246" text-anchor="middle"><tspan x="335" dy="0">Replay</tspan><tspan x="335" dy="1.2em">(deterministic, step)</tspan></text></g>
+    <g class="node" data-cid="hp-devinspect"><rect class="shape comp-sub" x="440" y="222" width="170" height="56" rx="8"/>
+      <text x="525" y="246" text-anchor="middle"><tspan x="525" dy="0">Dev Mode inspect</tspan><tspan x="525" dy="1.2em">historical state</tspan></text></g>
+
+    <g class="node" data-cid="ai-decision"><rect class="shape comp-ai" x="60" y="304" width="170" height="56" rx="8"/>
+      <text x="145" y="328" text-anchor="middle"><tspan x="145" dy="0">AI: DecisionRequest</tspan><tspan x="145" dy="1.2em">pipeline (as humans)</tspan></text></g>
+    <g class="node" data-cid="ai-difficulty"><rect class="shape comp-ai" x="250" y="304" width="170" height="56" rx="8"/>
+      <text x="335" y="328" text-anchor="middle"><tspan x="335" dy="0">AI: Strategy-based</tspan><tspan x="335" dy="1.2em">difficulty</tspan></text></g>
+    <g class="node" data-cid="ai-rng"><rect class="shape comp-ai" x="440" y="304" width="170" height="56" rx="8"/>
+      <text x="525" y="328" text-anchor="middle"><tspan x="525" dy="0">AI: deterministic RNG</tspan><tspan x="525" dy="1.2em">· perfect info (MVP)</tspan></text></g>
+
+    <!-- neighbors -->
+    <g class="node neighbor" data-cid="game-engine"><rect class="shape comp-engine" x="680" y="140" width="160" height="56" rx="8"/>
+      <text x="760" y="172" text-anchor="middle">GameEngine</text></g>
+    <g class="node neighbor" data-cid="models"><rect class="shape comp-data" x="680" y="270" width="160" height="56" rx="8"/>
+      <text x="760" y="302" text-anchor="middle">Models</text></g>
+  </svg>
+</section>
+
+<!-- ============================ 8. DATA MODEL (class diagram) ============================ -->
+<section class="diagram" id="d-data-model" data-featured="models">
+  <h2>Data Model</h2>
+  <p class="caption">Featured: the model entities from §2 as a class diagram (simplified UML — inheritance vertical, has-a horizontal; composition = filled diamond, aggregation = open, association = open arrow). GameCard is the hub; GameAction specializes into Simple/Complex actions.</p>
+  <svg viewBox="0 0 1200 1000" width="100%" role="img" aria-label="Data model class diagram">
+
+    <!-- ============ RELATIONSHIP EDGES (drawn first) ============ -->
+    <!-- Game *--> Player (composition, diamond on Player) -->
+    <path class="edge" data-pts="310,175 440,175" marker-end="url(#dia-f)"/>
+    <text class="mult" x="418" y="168">2..*</text>
+    <!-- Player *--> Zone (composition, owns zones) -->
+    <path class="edge" data-pts="670,175 820,160" marker-end="url(#dia-f)"/>
+    <text class="mult" x="795" y="150">3</text>
+    <text class="edge-label" x="700" y="150">owns</text>
+    <!-- GameCard o--> CardDefinition (aggregation, diamond on CardDefinition) -->
+    <path class="edge" data-pts="470,500 310,500" marker-end="url(#dia-o)"/>
+    <text class="mult" x="330" y="493">1</text>
+    <!-- GameCard *--> CounterStack (composition) -->
+    <path class="edge" data-pts="730,470 860,490" marker-end="url(#dia-f)"/>
+    <text class="mult" x="835" y="482">*</text>
+    <!-- GameCard --> Zone (association: currentZone) -->
+    <path class="edge" data-pts="730,430 775,430 775,200 820,200" marker-end="url(#assoc)"/>
+    <text class="edge-label" x="782" y="300">currentZone</text>
+    <!-- GameCard o--> CardLayout (aggregation, UI-only) -->
+    <path class="edge" data-pts="730,600 795,600 795,660 860,660" marker-end="url(#dia-o)"/>
+    <text class="mult" x="808" y="653">0..1</text>
+    <text class="edge-label" x="738" y="594">UI-only</text>
+    <!-- Game *--> GameAction (composition, history) -->
+    <path class="edge" data-pts="80,180 45,180 45,780 250,780" marker-end="url(#dia-f)"/>
+    <text class="mult" x="210" y="773">*</text>
+    <text class="edge-label" x="52" y="470">history</text>
+    <!-- Inheritance: GameAction (base) <|-- SimpleAction, ComplexAction -->
+    <path class="edge" data-pts="365,858 365,840" marker-end="url(#tri)"/>
+    <path class="edge" data-pts="365,858 220,858 220,880"/>
+    <path class="edge" data-pts="365,858 490,858 490,880"/>
+    <!-- ComplexAction *--> SimpleAction (composition pipeline) -->
+    <path class="edge" data-pts="380,910 350,910 350,920 320,920" marker-end="url(#dia-f)"/>
+    <text class="mult" x="330" y="913">*</text>
+    <text class="edge-label" x="336" y="905">pipeline</text>
+    <!-- DecisionRequest --> DecisionResponse (association) -->
+    <path class="edge" data-pts="920,820 970,820" marker-end="url(#assoc)"/>
+    <text class="edge-label" x="924" y="814">answered by</text>
+
+    <!-- ============ CLASS BOXES ============ -->
+    <!-- Game -->
+    <g class="node" data-cid="class-game">
+      <rect class="shape comp-data" x="80" y="100" width="230" height="150" rx="0"/>
+      <line class="cls-sep" x1="80" y1="128" x2="310" y2="128"/>
+      <text class="cls-name" x="195" y="120" text-anchor="middle">Game</text>
+      <text class="cls-attr" x="92" y="146">+ gameId · randomSeed</text>
+      <text class="cls-attr" x="92" y="164">+ turnNumber, phase, step</text>
+      <text class="cls-attr" x="92" y="182">+ currentTurnPlayerId</text>
+      <text class="cls-attr" x="92" y="200">+ priorityPlayerId</text>
+      <text class="cls-attr" x="92" y="218">+ actionHistory[*]</text>
+      <text class="cls-attr" x="92" y="236">+ winLossState</text>
+    </g>
+    <!-- Player -->
+    <g class="node" data-cid="class-player">
+      <rect class="shape comp-data" x="440" y="90" width="230" height="170" rx="0"/>
+      <line class="cls-sep" x1="440" y1="118" x2="670" y2="118"/>
+      <text class="cls-name" x="555" y="110" text-anchor="middle">Player</text>
+      <text class="cls-attr" x="452" y="136">+ playerId</text>
+      <text class="cls-attr" x="452" y="154">+ seatPosition</text>
+      <text class="cls-attr" x="452" y="172">+ startingLife / currentLife</text>
+      <text class="cls-attr" x="452" y="190">+ manaPool</text>
+      <text class="cls-attr" x="452" y="208">+ counters[*]</text>
+      <text class="cls-attr" x="452" y="226">+ commanderState</text>
+    </g>
+    <!-- Zone -->
+    <g class="node" data-cid="class-zone">
+      <rect class="shape comp-data" x="820" y="90" width="210" height="140" rx="0"/>
+      <line class="cls-sep" x1="820" y1="118" x2="1030" y2="118"/>
+      <text class="cls-name" x="925" y="110" text-anchor="middle">Zone</text>
+      <text class="cls-attr" x="832" y="136">+ zoneId (stable)</text>
+      <text class="cls-attr" x="832" y="154">+ kind (Library/Hand/…)</text>
+      <text class="cls-attr" x="832" y="172">+ ordered = true</text>
+      <text class="cls-attr" x="832" y="190">+ shared | ownerId</text>
+      <text class="cls-attr" x="832" y="208">+ cards[*]</text>
+    </g>
+    <!-- CardDefinition -->
+    <g class="node" data-cid="class-carddef">
+      <rect class="shape comp-data" x="80" y="430" width="230" height="140" rx="0"/>
+      <line class="cls-sep" x1="80" y1="458" x2="310" y2="458"/>
+      <text class="cls-name" x="195" y="450" text-anchor="middle">CardDefinition</text>
+      <text class="cls-attr" x="92" y="476">+ scryfall gameplay data</text>
+      <text class="cls-attr" x="92" y="494">+ faces[*] (DFC / multi)</text>
+      <text class="cls-attr" x="92" y="512">+ imageUrls[*]</text>
+      <text class="cls-attr" x="92" y="530">+ textFallback</text>
+    </g>
+    <!-- GameCard (hub) -->
+    <g class="node" data-cid="class-gamecard">
+      <rect class="shape comp-data" x="470" y="400" width="260" height="240" rx="0"/>
+      <line class="cls-sep" x1="470" y1="428" x2="730" y2="428"/>
+      <text class="cls-name" x="600" y="420" text-anchor="middle">GameCard</text>
+      <text class="cls-attr" x="482" y="446">+ gameCardId (persistent)</text>
+      <text class="cls-attr" x="482" y="464">+ owner, controller : Player</text>
+      <text class="cls-attr" x="482" y="482">+ currentZone : Zone</text>
+      <text class="cls-attr" x="482" y="500">+ visibility · isToken</text>
+      <text class="cls-attr" x="482" y="518">+ power / toughness</text>
+      <text class="cls-attr" x="482" y="536">+ damageMarked · tapped</text>
+      <text class="cls-attr" x="482" y="554">+ summoningSickness</text>
+      <text class="cls-attr" x="482" y="572">+ attachments[*]</text>
+      <text class="cls-attr" x="482" y="590">+ counters[*]</text>
+      <text class="cls-attr" x="482" y="608">+ transitionHistory[*]</text>
+    </g>
+    <!-- CounterStack -->
+    <g class="node" data-cid="class-counterstack">
+      <rect class="shape comp-data" x="860" y="430" width="210" height="120" rx="0"/>
+      <line class="cls-sep" x1="860" y1="458" x2="1070" y2="458"/>
+      <text class="cls-name" x="965" y="450" text-anchor="middle">CounterStack</text>
+      <text class="cls-attr" x="872" y="476">+ counterType</text>
+      <text class="cls-attr" x="872" y="494">+ amount</text>
+      <text class="cls-attr" x="872" y="524">shared by cards &amp; players</text>
+    </g>
+    <!-- CardLayout -->
+    <g class="node" data-cid="class-cardlayout">
+      <rect class="shape comp-data" x="860" y="610" width="210" height="140" rx="0"/>
+      <line class="cls-sep" x1="860" y1="638" x2="1070" y2="638"/>
+      <text class="cls-name" x="965" y="630" text-anchor="middle">CardLayout</text>
+      <text class="cls-attr" x="872" y="656">+ gameCardId</text>
+      <text class="cls-attr" x="872" y="674">+ xPosition / yPosition</text>
+      <text class="cls-attr" x="872" y="692">+ zIndex</text>
+      <text class="cls-attr" x="872" y="722">UI-only · not in replay</text>
+    </g>
+    <!-- GameAction (base) -->
+    <g class="node" data-cid="class-gameaction">
+      <rect class="shape comp-data" x="250" y="720" width="230" height="120" rx="0"/>
+      <line class="cls-sep" x1="250" y1="748" x2="480" y2="748"/>
+      <text class="cls-name" x="365" y="740" text-anchor="middle">GameAction</text>
+      <text class="cls-attr" x="262" y="766">+ actionId</text>
+      <text class="cls-attr" x="262" y="784">+ actionSequenceNumber</text>
+      <text class="cls-attr" x="262" y="802">+ playerId</text>
+      <text class="cls-attr" x="262" y="820">+ reversible</text>
+    </g>
+    <!-- SimpleAction -->
+    <g class="node" data-cid="class-simpleaction">
+      <rect class="shape comp-data" x="120" y="880" width="200" height="80" rx="0"/>
+      <line class="cls-sep" x1="120" y1="908" x2="320" y2="908"/>
+      <text class="cls-name" x="220" y="900" text-anchor="middle">SimpleAction</text>
+      <text class="cls-attr" x="132" y="932">atomic state change</text>
+    </g>
+    <!-- ComplexAction -->
+    <g class="node" data-cid="class-complexaction">
+      <rect class="shape comp-data" x="380" y="880" width="220" height="110" rx="0"/>
+      <line class="cls-sep" x1="380" y1="908" x2="600" y2="908"/>
+      <text class="cls-name" x="490" y="900" text-anchor="middle">ComplexAction</text>
+      <text class="cls-attr" x="392" y="932">+ state: pending / resolving</text>
+      <text class="cls-attr" x="392" y="950">/ resolved / cancelled</text>
+      <text class="cls-attr" x="392" y="968">resolution pipeline</text>
+    </g>
+    <!-- DecisionRequest -->
+    <g class="node" data-cid="class-decisionrequest">
+      <rect class="shape comp-data" x="700" y="760" width="220" height="120" rx="0"/>
+      <line class="cls-sep" x1="700" y1="788" x2="920" y2="788"/>
+      <text class="cls-name" x="810" y="780" text-anchor="middle">DecisionRequest</text>
+      <text class="cls-attr" x="712" y="806">+ responsiblePlayer</text>
+      <text class="cls-attr" x="712" y="824">+ source</text>
+      <text class="cls-attr" x="712" y="842">+ availableChoices</text>
+      <text class="cls-attr" x="712" y="860">+ constraints</text>
+    </g>
+    <!-- DecisionResponse -->
+    <g class="node" data-cid="class-decisionresponse">
+      <rect class="shape comp-data" x="970" y="760" width="210" height="110" rx="0"/>
+      <line class="cls-sep" x1="970" y1="788" x2="1180" y2="788"/>
+      <text class="cls-name" x="1075" y="780" text-anchor="middle">DecisionResponse</text>
+      <text class="cls-attr" x="982" y="806">+ chosen choice(s)</text>
+      <text class="cls-attr" x="982" y="824">from human or bot</text>
+    </g>
+
+    <!-- neighbor: GameEngine (creator of DecisionRequest) -->
+    <path class="edge" data-pts="810,920 810,882" marker-end="url(#assoc)"/>
+    <g class="node neighbor" data-cid="game-engine">
+      <rect class="shape comp-engine" x="700" y="920" width="220" height="56" rx="8"/>
+      <text x="810" y="944" text-anchor="middle"><tspan x="810" dy="0">GameEngine</tspan><tspan x="810" dy="1.2em">creates DecisionRequests</tspan></text>
+    </g>
+  </svg>
+</section>
+
+<!-- ARCHMAP:DIAGRAMS-END -->
+</main>
+
+<script id="archmap-registry" type="application/json">
+{
+  "components": {
+    "root":                   { "label": "MTG Deck Tester",           "path": "MTG_Deck_Tester_Spec_v1_0.docx", "diagram": "d-root" },
+    "views":                  { "label": "Views (UI Layer)",           "path": "§5 Battlefield UI & Interaction", "diagram": null },
+    "battlefield-ui":         { "label": "Battlefield UI",              "path": "§5",                              "diagram": "d-battlefield-ui" },
+    "enlarged-card-view":     { "label": "Enlarged Card View",          "path": "§4 Card Inspection",              "diagram": "d-enlarged-card-view" },
+    "zones-search":           { "label": "Zones, Search & Inspection",  "path": "§4",                              "diagram": "d-zones-search" },
+    "tokens":                 { "label": "Tokens",                      "path": "§6",                              "diagram": "d-tokens" },
+    "command-zone":           { "label": "Command Zone UI",             "path": "§4 Command Zone",                 "diagram": null },
+    "ui-mana-turn":           { "label": "Mana / Turn / Replay UI",     "path": "§3, §7",                          "diagram": null },
+    "deck-store":             { "label": "DeckStore",                   "path": "§1 Deck Management",              "diagram": null },
+    "game-engine":            { "label": "GameEngine",                  "path": "§2–§3",                           "diagram": "d-game-engine" },
+    "bot-engine":             { "label": "BotEngine (AI)",              "path": "§7 AI Architecture",              "diagram": "d-history-persistence-ai" },
+    "models":                 { "label": "Models",                      "path": "§2 Data Model",                   "diagram": "d-data-model" },
+    "scryfall":               { "label": "Scryfall (external)",         "path": "§1 Card Data & Images",           "diagram": null },
+    "history-persistence-ai": { "label": "History, Persistence & AI",   "path": "§7",                              "diagram": "d-history-persistence-ai" },
+
+    "ge-turn":            { "label": "Turn / Priority / Triggers", "path": "§3", "diagram": null },
+    "ge-sba":             { "label": "State-Based Actions",        "path": "§3", "diagram": null },
+    "ge-replacement":     { "label": "Replacement & Prevention",   "path": "§3", "diagram": null },
+    "ge-layers":          { "label": "Continuous Effects (Layers)","path": "§3", "diagram": null },
+    "ge-mana":            { "label": "Mana System",                "path": "§3", "diagram": null },
+    "ge-combat":          { "label": "Combat System",              "path": "§3", "diagram": null },
+    "ge-copy":            { "label": "Copy Effects",               "path": "§3", "diagram": null },
+    "ge-zone-manager":    { "label": "Zone Manager",               "path": "§4", "diagram": null },
+    "ge-token-pipeline":  { "label": "Token Creation Pipeline",    "path": "§6", "diagram": null },
+    "ge-decision":        { "label": "Decision Pipeline",          "path": "§2", "diagram": null },
+    "ge-devmode":         { "label": "Developer Mode",             "path": "§3", "diagram": null },
+
+    "bf-human":          { "label": "Human Battlefield",     "path": "§5", "diagram": null },
+    "bf-opponent":       { "label": "Opponent Panels",       "path": "§5", "diagram": null },
+    "bf-cardlayout":     { "label": "CardLayout / Spawn",    "path": "§5", "diagram": null },
+    "bf-attachments":    { "label": "Attachments",           "path": "§5", "diagram": null },
+    "bf-counters":       { "label": "Counter & Damage",      "path": "§5", "diagram": null },
+    "bf-status":         { "label": "Card Status Display",   "path": "§5", "diagram": null },
+    "bf-token-grouping": { "label": "Token Grouping",        "path": "§6", "diagram": null },
+    "bf-turn-indicator": { "label": "Active Turn Indicator", "path": "§5", "diagram": null },
+    "bf-annotations":    { "label": "Annotations (future)",  "path": "§5", "diagram": null },
+
+    "ecv-open":      { "label": "Opening / Dismissal",       "path": "§4", "diagram": null },
+    "ecv-actions":   { "label": "Allowed vs Disallowed",     "path": "§4", "diagram": null },
+    "ecv-counter":   { "label": "Counter Management",        "path": "§4", "diagram": null },
+    "ecv-move":      { "label": "Move Zone Action",          "path": "§4", "diagram": null },
+    "ecv-lifecycle": { "label": "Lifecycle",                 "path": "§4", "diagram": null },
+
+    "zv-viewer":         { "label": "Ordered Zone Viewer",   "path": "§4", "diagram": null },
+    "zv-perzone":        { "label": "Per-Zone Behavior",     "path": "§4", "diagram": null },
+    "zv-library-search": { "label": "Library Search UI",     "path": "§4", "diagram": null },
+    "zv-shared-search":  { "label": "Shared Search System",  "path": "§4", "diagram": null },
+    "zv-behavior":       { "label": "Search Behavior",       "path": "§4", "diagram": null },
+
+    "tk-behavior":   { "label": "Token Behavior",     "path": "§6", "diagram": null },
+    "tk-grouping":   { "label": "Token Grouping",     "path": "§6", "diagram": null },
+    "tk-picker":     { "label": "Manual Token Picker","path": "§6", "diagram": null },
+    "tk-pipeline":   { "label": "Creation Pipeline",  "path": "§6", "diagram": null },
+    "tk-provenance": { "label": "Provenance",         "path": "§6", "diagram": null },
+
+    "hp-undo":       { "label": "Undo System",        "path": "§7", "diagram": null },
+    "hp-redo":       { "label": "Redo System",        "path": "§7", "diagram": null },
+    "hp-multiundo":  { "label": "Multi-Step Undo",    "path": "§7", "diagram": null },
+    "hp-save":       { "label": "Save / Load",        "path": "§7", "diagram": null },
+    "hp-replay":     { "label": "Replay",             "path": "§7", "diagram": null },
+    "hp-devinspect": { "label": "Dev Mode Inspect",   "path": "§7", "diagram": null },
+    "ai-decision":   { "label": "AI: DecisionRequest","path": "§7", "diagram": null },
+    "ai-difficulty": { "label": "AI: Difficulty",     "path": "§7", "diagram": null },
+    "ai-rng":        { "label": "AI: Determinism",    "path": "§7", "diagram": null },
+
+    "class-game":            { "label": "Game",             "path": "§2", "diagram": null },
+    "class-player":          { "label": "Player",           "path": "§2", "diagram": null },
+    "class-zone":            { "label": "Zone",             "path": "§2", "diagram": null },
+    "class-carddef":         { "label": "CardDefinition",   "path": "§1–§2", "diagram": null },
+    "class-gamecard":        { "label": "GameCard",         "path": "§2", "diagram": null },
+    "class-counterstack":    { "label": "CounterStack",     "path": "§4", "diagram": null },
+    "class-cardlayout":      { "label": "CardLayout",       "path": "§5", "diagram": null },
+    "class-gameaction":      { "label": "GameAction",       "path": "§2", "diagram": null },
+    "class-simpleaction":    { "label": "SimpleAction",     "path": "§2", "diagram": null },
+    "class-complexaction":   { "label": "ComplexAction",    "path": "§2", "diagram": null },
+    "class-decisionrequest": { "label": "DecisionRequest",  "path": "§2", "diagram": null },
+    "class-decisionresponse":{ "label": "DecisionResponse", "path": "§2", "diagram": null }
+  }
+}
+</script>
+<script>
+  /* 1. Rounded orthogonal edges */
+  document.querySelectorAll("[data-pts]").forEach(p => {
+    const pts = p.dataset.pts.trim().split(/\s+/).map(s => s.split(",").map(Number));
+    const R = 14; let d = `M${pts[0]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const [a, b, c] = [pts[i-1], pts[i], pts[i+1]];
+      const r = Math.min(R, Math.hypot(b[0]-a[0], b[1]-a[1])/2, Math.hypot(c[0]-b[0], c[1]-b[1])/2);
+      const u = [Math.sign(b[0]-a[0]), Math.sign(b[1]-a[1])], v = [Math.sign(c[0]-b[0]), Math.sign(c[1]-b[1])];
+      d += ` L${b[0]-u[0]*r},${b[1]-u[1]*r} Q${b[0]},${b[1]} ${b[0]+v[0]*r},${b[1]+v[1]*r}`;
+    }
+    d += ` L${pts[pts.length-1]}`; p.setAttribute("d", d);
+  });
+
+  /* 2. Registry-driven click-nav */
+  const registry = JSON.parse(document.getElementById("archmap-registry").textContent).components;
+  document.querySelectorAll(".node[data-cid]").forEach(node => {
+    const entry = registry[node.dataset.cid];
+    const ownSection = node.closest("section.diagram");
+    const featuredHere = ownSection && ownSection.dataset.featured === node.dataset.cid;
+    const targetsOwn = entry && ownSection && entry.diagram === ownSection.id;
+    if (entry && entry.diagram && !featuredHere && !targetsOwn && document.getElementById(entry.diagram)) {
+      node.classList.add("clickable");
+      node.addEventListener("click", () => {
+        const target = document.getElementById(entry.diagram);
+        target.scrollIntoView({ behavior: "smooth" });
+        target.classList.add("flash");
+        setTimeout(() => target.classList.remove("flash"), 900);
+      });
+    }
+  });
+
+  /* 3. TOC scroll-spy */
+  const links = [...document.querySelectorAll("#toc a")];
+  const byId = Object.fromEntries(links.map(a => [a.getAttribute("href").slice(1), a]));
+  const spy = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove("active"));
+        byId[e.target.id]?.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-10% 0px -70% 0px" });
+  document.querySelectorAll("section.diagram").forEach(s => spy.observe(s));
+</script>
+</body>
+</html>

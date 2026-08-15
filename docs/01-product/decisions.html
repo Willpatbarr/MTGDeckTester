@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision Log — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#legend">Legend</a>
+    <a href="#proposed">Proposed</a>
+    <a href="#decided">Decided</a>
+    <a href="#deferred">Deferred</a>
+    <a href="#conflict">Conflicts</a>
+    <a href="#locked">Locked</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 01-product &rsaquo; Decision Log</div>
+    <h1>Decision Log</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> every product and architecture call that has been made, proposed, or deliberately deferred. &nbsp;<strong>What to do with it:</strong> read the Proposed section first and say yes or push back — everything else is here for reference.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Most of the plan is already decided or locked from source material; seven genuine coin-flips remain open in the Proposed section below, and the biggest one — building a full rules engine — is the single call that reshapes the whole project.</p>
+
+  <h2 id="legend">Legend</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Tag</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag locked">[LOCKED]</span></td><td>Came directly from the source notes (specs or diagrams). Not up for debate without new source material.</td></tr>
+      <tr><td><span class="tag decided">[DECIDED]</span></td><td>A judgment call made on the owner's behalf, made with confidence. Can be revisited but isn't waiting on anyone.</td></tr>
+      <tr><td><span class="tag proposed">[PROPOSED]</span></td><td>A genuine coin-flip. This is where the owner should read closely and either confirm or overrule.</td></tr>
+      <tr><td><span class="tag deferred">[DEFERRED]</span></td><td>Deliberately not decided yet, with an explicit trigger describing when it should be revisited.</td></tr>
+      <tr><td><span class="tag conflict">[CONFLICT]</span></td><td>The source notes contradicted themselves. Resolved in <a href="../00-source/contradictions.html">contradictions.html</a>.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="proposed">Proposed — read these first <span class="tag proposed">[PROPOSED]</span></h2>
+  <p>Seven genuine coin-flips. Each has a default already chosen so the plan can move forward, but every one of these is worth a deliberate yes.</p>
+
+  <div class="callout">
+    <span class="label">P1 &middot; Proposed &middot; the biggest call in the whole plan</span>
+    <h3>Full rules engine (resolves conflict C1)</h3>
+    <p><strong>Default chosen:</strong> build it — the newer, more detailed spec (S2) wins over the older, simpler one (S1).</p>
+    <p>You get a real MTG sandbox that can eventually test anything a card does, at roughly <strong>10&times; the MVP size</strong> that the older spec described. The alternative is S1's Simple Bot Mode: playable in about a month, but creatures are vanilla and it can never test what a card actually does. This single decision reshapes the entire milestone tree — see <a href="../04-plan/milestones.html">milestones.html</a>, where M2 is deliberately front-loaded so a usable manual sandbox exists before any of this rules work begins.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">P2 &middot; Proposed</span>
+    <h3>Local persistence technology (resolves gap G1)</h3>
+    <p><strong>Default chosen:</strong> SwiftData for decks and the card cache; Codable JSON for game saves and replays.</p>
+    <p>SwiftData gives free querying and a path to iCloud sync later, but its migration story is still young. JSON keeps replay and save files portable and diffable, which fits — a game save is a document, not something you query.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">P3 &middot; Proposed</span>
+    <h3>Priority auto-pass timer (resolves conflict C8)</h3>
+    <p><strong>Default chosen:</strong> off by default.</p>
+    <p>On by default matches S2's literal text, but it actively fights the manual-advancement default and can steal priority while you're still thinking about a line. Off means you never lose a beat; it's a setting you can flip on for fast goldfishing.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">P4 &middot; Proposed</span>
+    <h3>Battlefield stays fixed and non-scrolling (resolves conflict C13)</h3>
+    <p><strong>Default chosen:</strong> ship as specified in MVP &mdash; no zoom, no pan, no scroll.</p>
+    <p>This is the simplest build and preserves the freeform drag model, but a real Commander board will outgrow an iPhone screen (roughly 12&ndash;15 cards before it's unusable). Trigger for pinch-zoom or an auto-organize "Clean Up Board" feature is the first game where you actually run out of room.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">P5 &middot; Proposed</span>
+    <h3><code>AIEngine</code> over <code>BotEngine</code> (resolves conflict C7)</h3>
+    <p><strong>Default chosen:</strong> <code>AIEngine</code>.</p>
+    <p>Pure taste — the diagrams say <code>AIEngine</code>, the prose says <code>BotEngine</code>. Picking one now means the codebase never has to carry both names for the same component.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">P6 &middot; Proposed</span>
+    <h3>AI difficulty scaffold in M5</h3>
+    <p><strong>Default chosen:</strong> build the scaffold now, ship exactly one strategy.</p>
+    <p>Costs a little extra structure up front, but avoids a rewrite the moment a second difficulty level is wanted. If you're confident there will only ever be one bot strategy, this scaffold can be dropped.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">P7 &middot; Proposed</span>
+    <h3>GitHub Actions deferred to T2</h3>
+    <p><strong>Default chosen:</strong> deferred, not set up now.</p>
+    <p>macOS runner minutes burn at 10&times; the private-repo rate, so the free 2,000-minute allowance is really only about 15&ndash;20 iOS builds a month. Trigger for revisiting is the second time a broken build gets pushed to <code>main</code>.</p>
+  </div>
+
+  <h2 id="decided">Decided <span class="tag decided">[DECIDED]</span></h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>Decision</th><th>Resolution</th></tr></thead>
+    <tbody>
+      <tr><td>C7</td><td>AI component naming</td><td>Diagrams call it <code>AIEngine</code>; prose calls it <code>BotEngine</code>. Consistency matters more than which name wins — <code>AIEngine</code> is used everywhere, <code>BotEngine</code> is banned from the codebase.</td></tr>
+      <tr><td>C9</td><td>Undo architecture vs. delivery</td><td>Not a real contradiction. Every <code>GameAction</code> is designed reversible from M2 onward (architecture); the undo feature itself ships in M6 covering a defined subset (delivery). Both source statements hold at once.</td></tr>
+      <tr><td>C10</td><td>Strict engine, permissive UI</td><td>Both hold, deliberately. The engine follows official rules and enforces target restrictions; the UI is a testing tool that shows all hands and libraries and offers every zone destination with no legality filter. Visibility is still tracked in the model for a future rules-aware mode. See <a href="vision.html#principle">vision.html</a> for the full statement of this principle.</td></tr>
+      <tr><td>G2</td><td>Scryfall access pattern</td><td>Bulk <code>default_cards</code> file downloaded on first launch; per-card API calls only on cache misses. Keeps import fast and the app usable offline.</td></tr>
+      <tr><td>G3</td><td>Testing strategy</td><td>Swift Testing unit tests on the engine only, with deterministic seeds. UI stays untested until a teammate exists to justify the cost.</td></tr>
+      <tr><td>G4</td><td><code>randomSeed</code> and <code>manaPool</code> types</td><td><code>randomSeed: UInt64</code>, drawn from a seeded <code>SeededGenerator: RandomNumberGenerator</code>. <code>manaPool: [ManaSymbol: Int]</code> plus an ordered list of restricted-mana objects for "spend only on&hellip;" riders that need identity, not just a count.</td></tr>
+      <tr><td>G6</td><td>Unresolved-card handling</td><td>Unresolved cards render as a dedicated "needs attention" row in the deck detail view, with a retry action and a manual-search action.</td></tr>
+      <tr><td>G7</td><td>App distribution plan</td><td>TestFlight, gated behind the Apple Developer Program service (T1 in <a href="../03-services/index.html">03-services</a>).</td></tr>
+      <tr><td>G9</td><td><code>CardDefinition</code> field list</td><td>Specified in full in <a href="../02-architecture/data-model.html">data-model.html</a>, derived from Scryfall's card object, gameplay-relevant subset only.</td></tr>
+      <tr><td>G10</td><td>Error/crash reporting</td><td>Sentry, wired in at T1 (see <a href="../03-services/index.html">03-services</a>).</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="deferred">Deferred <span class="tag deferred">[DEFERRED]</span></h2>
+  <p>Deliberately not decided. Each row has a named trigger for when it should be picked back up.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>Deferred item</th><th>Trigger to revisit</th></tr></thead>
+    <tbody>
+      <tr><td>C12</td><td>Commander damage tracking</td><td>The first time a test game should have ended by commander damage and didn't. <code>timesCommandCast</code> already exists on the Player model, so commander tax works today; damage tracking is a small addition on top.</td></tr>
+      <tr><td>C13 mitigation</td><td>Pinch-zoom or "Clean Up Board" auto-organize for the fixed battlefield</td><td>The first game where you run out of room on the fixed, non-scrolling play area.</td></tr>
+      <tr><td>G5</td><td>Deck legality validation (100 cards, singleton, colour identity)</td><td>The first time an illegal deck produces a confusing test result.</td></tr>
+      <tr><td>G8</td><td>Accessibility and localization</td><td>A real user who needs it. Not a solo-quarter concern.</td></tr>
+      <tr><td>Rejected: Firebase / Supabase / any backend</td><td>&mdash;</td><td>Cross-device deck sync, or shared/online games.</td></tr>
+      <tr><td>Rejected: CloudKit sync</td><td>&mdash;</td><td>You own two devices and are actually annoyed by not syncing.</td></tr>
+      <tr><td>Rejected: Auth provider (Clerk, Auth0, Sign in with Apple)</td><td>&mdash;</td><td>Any feature that isn't purely local.</td></tr>
+      <tr><td>Rejected: RevenueCat / any monetization</td><td>&mdash;</td><td>You decide to sell it.</td></tr>
+      <tr><td>Rejected: Fastlane</td><td>&mdash;</td><td>Releasing more than weekly, or a teammate builds too.</td></tr>
+      <tr><td>Rejected: Feature flags (LaunchDarkly etc.)</td><td>&mdash;</td><td>More than 5 testers on different builds.</td></tr>
+      <tr><td>Rejected: Push notifications (APNs)</td><td>&mdash;</td><td>Async or online multiplayer.</td></tr>
+      <tr><td>Rejected: A hosted database of any kind</td><td>&mdash;</td><td>Same trigger as backend, above.</td></tr>
+      <tr><td>Rejected: Docker / any container</td><td>&mdash;</td><td>Never, for this project.</td></tr>
+      <tr><td>Rejected: Analytics on day one (Amplitude, Mixpanel)</td><td>&mdash;</td><td>TelemetryDeck at T2 covers this instead.</td></tr>
+      <tr><td>Rejected: Dedicated MTG rules library (e.g. a Forge/XMage port)</td><td>&mdash;</td><td>Never &mdash; building the engine is the point of the project.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="conflict">Conflicts <span class="tag conflict">[CONFLICT]</span></h2>
+  <p>Full detail, both source positions, and reasoning live in <a href="../00-source/contradictions.html">contradictions.html</a> — not duplicated here. One-line resolutions only:</p>
+  <ul>
+    <li><strong>C1</strong> &mdash; depth of the rules engine: full engine wins (see P1 above).</li>
+    <li><strong>C2</strong> &mdash; Simple Bot Mode: dropped; kept on record as the fallback if the rules engine slips.</li>
+    <li><strong>C3</strong> &mdash; format &amp; life total: Commander, 40 life, commander rules on.</li>
+    <li><strong>C4</strong> &mdash; card data source: Scryfall; free-form token creation dropped in favour of a deck-derived picker.</li>
+    <li><strong>C5</strong> &mdash; where the rules live: a Rules System subsystem inside GameEngine, not a peer <code>RulesEngine</code>.</li>
+    <li><strong>C6</strong> &mdash; application layering: MVVM with ViewModels, Database, and CardAPI as shown in the diagrams.</li>
+    <li><strong>C8</strong> &mdash; priority timeout vs. manual advancement: both real, timeout ships off by default (see P3 above).</li>
+    <li><strong>C11</strong> &mdash; mulligans: in, as a silent regression to fix, not a decision to cut them. London mulligan.</li>
+    <li><strong>C13</strong> &mdash; fixed battlefield vs. iPhone-first: ship fixed for MVP, mitigation deferred (see P4 above and the Deferred table).</li>
+    <li><strong>C14</strong> &mdash; deck/role model: no conflict, both sources agree; recorded <span class="tag locked">[LOCKED]</span> so it isn't reopened.</li>
+  </ul>
+
+  <h2 id="locked">Locked <span class="tag locked">[LOCKED]</span></h2>
+  <div class="callout good">
+    <p>Everything tagged <span class="tag locked">[LOCKED]</span> in <a href="features.html">features.html</a> came directly from the source specs and diagrams, not from planning judgment. If a locked feature looks wrong, the fix is to go back to the source material — not to relitigate it here.</p>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Confirm or overrule each of the seven <span class="tag proposed">[PROPOSED]</span> defaults above, starting with P1 &mdash; it changes the shape of every milestone.</li>
+    <li>If a <span class="tag conflict">[CONFLICT]</span> resolution looks wrong, read the full reasoning in <a href="../00-source/contradictions.html">contradictions.html</a> before pushing back.</li>
+    <li>Revisit each <span class="tag deferred">[DEFERRED]</span> row only when its stated trigger actually happens &mdash; not before.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

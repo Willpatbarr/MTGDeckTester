@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Milestones — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#summary">Summary table</a>
+    <a href="#rationale">Sequencing rationale</a>
+    <a href="#detail">Per-milestone detail</a>
+    <a href="#tiers">Tier legend</a>
+    <a href="#linear">Linear mapping</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 04-plan &rsaquo; Milestones</div>
+    <h1>Milestones</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the seven milestones that take MTG Deck Tester from an empty Xcode project to a friend playing it on their own phone. &nbsp;<strong>What to do with it:</strong> check what unlocks next before starting new work, and treat the summary table as a living document.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Seven milestones run from card data and decks, through a fully-playable-by-hand sandbox, through the rules engine and AI, to a friend installing the app from TestFlight.</p>
+
+  <h2 id="summary">Summary table</h2>
+  <p>This table is meant to be rewritten in one pass. The plan assumes it will change as milestones are actually worked through — do not treat it as fixed.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>Milestone</th><th>Tier</th><th>Size</th><th>Goal</th><th>Depends on</th></tr></thead>
+    <tbody>
+      <tr><td>M1</td><td>Foundations, Card Data &amp; Decks</td><td><code>T0</code></td><td>M</td><td>Card data flows in from Scryfall and decks exist in a library</td><td>&mdash;</td></tr>
+      <tr><td>M2</td><td>Game State &amp; Manual Play Sandbox</td><td><code>T0</code></td><td>L</td><td><strong>Play a whole Commander game by hand</strong> &mdash; nothing enforced, everything possible</td><td>M1</td></tr>
+      <tr><td>M3</td><td>Rules Core</td><td><code>T0</code></td><td>L</td><td>The engine knows the rules: priority, stack, triggers, SBAs, layers, mana, replacement</td><td>M2</td></tr>
+      <tr><td>M4</td><td>Combat &amp; Copy Effects</td><td><code>T0</code></td><td>M</td><td>Combat and copies resolve by official rules</td><td>M3</td></tr>
+      <tr><td>M5</td><td>AI Opponent</td><td><code>T0</code></td><td>M</td><td>A bot plays a full turn against you through the decision pipeline</td><td>M3</td></tr>
+      <tr><td>M6</td><td>History, Persistence &amp; Replay</td><td><code>T0</code></td><td>M</td><td>Undo, redo, save, load, and deterministic step-through replay</td><td>M2 (arch), M4</td></tr>
+      <tr><td>M7</td><td>Ship to a Tester</td><td><code>T1</code></td><td>S</td><td>A friend installs it via TestFlight and their crashes reach you</td><td>M4, M5, M6</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="rationale">Sequencing rationale</h2>
+  <div class="callout good">
+    <span class="label">Why M2 comes before any rules subsystem</span>
+    <p>M2 is deliberately front-loaded so that something fully playable exists before any rules subsystem is written. It also de-risks C1 &mdash; if the rules-engine scope proves too large, M2 alone is already a usable manual deck-testing sandbox, and Simple Bot Mode (the road not taken) becomes the fallback for M5.</p>
+    <p>Every <span class="tag proposed">[PROPOSED]</span> decision is parked behind the milestone that would prove it right or wrong.</p>
+  </div>
+
+  <h2 id="detail">Per-milestone detail</h2>
+
+  <div class="card">
+    <h3>M1 &mdash; Foundations, Card Data &amp; Decks</h3>
+    <p><code>T0</code> &middot; Size M &middot; Depends on: nothing</p>
+    <p><strong>Definition of done:</strong> Paste a 100-card Commander decklist, and within 30 seconds every resolvable card shows its correct name, mana cost, type line and cached image in the deck detail view, with unresolved names listed separately and retryable. App relaunches offline and the deck still renders fully.</p>
+    <p><strong>Includes:</strong> Xcode project + folder conventions &middot; <code>CardDefinition</code> model &middot; Scryfall bulk-data ingest + per-card fallback &middot; image cache &middot; SwiftData persistence &middot; decklist text parser &middot; deck library + deck detail views &middot; unresolved-card handling.</p>
+    <p><strong>Services:</strong> GitHub (T0), Scryfall (T0), Linear (T0), Cloudflare Pages for docs (T0).</p>
+  </div>
+
+  <div class="card">
+    <h3>M2 &mdash; Game State &amp; Manual Play Sandbox</h3>
+    <p><code>T0</code> &middot; Size L &middot; Depends on: M1</p>
+    <p><strong>Definition of done:</strong> Start a 2-player Commander game from the setup screen, mulligan, and play a complete game to a natural finish entirely by hand &mdash; draw, play lands, cast by moving cards to the stack and resolving them yourself, tap/untap, add counters, create tokens, move any card to any zone, change life totals &mdash; without the app ever blocking a legal or illegal action. Closing and reopening the app resumes the game exactly.</p>
+    <p><strong>Includes:</strong> <code>Game</code>/<code>Player</code>/<code>Zone</code>/<code>GameCard</code>/<code>GameAction</code>/<code>Turn</code>/<code>CardLayout</code> models &middot; seeded RNG &middot; zone manager &middot; game setup screen &middot; freeform battlefield with drag/z-order/spawn rules &middot; opponent panels &middot; tap/untap &middot; counter &amp; damage badges &middot; card status display &middot; enlarged card view with counters and Move Zone &middot; Ordered Zone Viewer + shared search &middot; exile tags &middot; command zone UI &middot; manual token picker + creation pipeline &middot; token grouping &middot; attachments rendering &middot; mulligans &middot; manual turn/phase advancement &middot; active turn indicator &middot; reversible-action architecture (architecture only).</p>
+  </div>
+
+  <div class="card">
+    <h3>M3 &mdash; Rules Core</h3>
+    <p><code>T0</code> &middot; Size L &middot; Depends on: M2</p>
+    <p><strong>Definition of done:</strong> The engine independently drives a game &mdash; you cast a spell and the engine handles priority, puts it on the stack, detects and orders triggers, checks SBAs to fixpoint, applies replacement effects, recomputes layered characteristics, and computes legal mana payments &mdash; with Developer Mode showing the full layer evaluation for any permanent.</p>
+    <p><strong>Includes:</strong> Decision pipeline (<code>DecisionRequest</code>/<code>DecisionResponse</code>) &middot; priority &middot; stack resolution &middot; trigger detection, optional-trigger prompts, APNAP ordering &middot; SBAs &middot; replacement &amp; prevention &middot; continuous effects layer system &middot; mana system + floating-mana UI &middot; targeting + restrictions &middot; Developer Mode overrides and layer inspector.</p>
+  </div>
+
+  <div class="card">
+    <h3>M4 &mdash; Combat &amp; Copy Effects</h3>
+    <p><code>T0</code> &middot; Size M &middot; Depends on: M3</p>
+    <p><strong>Definition of done:</strong> Declare attackers and blockers in a real game; the engine enforces every restriction and requirement, assigns damage per official rules, prompts only for blocker order and trample, and Developer Mode shows the complete combat state including first/double strike. Copying a spell produces an independent stack object and prompts for new targets.</p>
+    <p><strong>Includes:</strong> combat sequence &middot; attack/block legality &middot; damage assignment &middot; combat state exposure &middot; copy effects.</p>
+  </div>
+
+  <div class="card">
+    <h3>M5 &mdash; AI Opponent</h3>
+    <p><code>T0</code> &middot; Size M &middot; Depends on: M3</p>
+    <p><strong>Definition of done:</strong> A bot takes a complete turn against you &mdash; untaps, draws, plays a land, casts spells, attacks &mdash; answering every engine <code>DecisionRequest</code> through the AIEngine pipeline, never touching state directly, and producing byte-identical play when replayed from the same seed.</p>
+    <p><strong>Includes:</strong> AI Interface &middot; Game Knowledge View &middot; Action Generator &middot; Action Evaluator &middot; Decision Selector &middot; strategy-based difficulty scaffold &middot; deterministic AI randomness.</p>
+  </div>
+
+  <div class="card">
+    <h3>M6 &mdash; History, Persistence &amp; Replay</h3>
+    <p><code>T0</code> &middot; Size M &middot; Depends on: M2 (architecture), M4</p>
+    <p><strong>Definition of done:</strong> Undo walks back at least ten consecutive actions correctly, redo restores them until a new action clears the redo stack, a saved game reloads to an identical state, and a replay of a finished game steps forward and backward through every action producing the same board at every point.</p>
+    <p><strong>Includes:</strong> multi-step undo &middot; redo &middot; game serialization &middot; replay engine with play/pause/step &middot; Developer Mode historical state inspection.</p>
+  </div>
+
+  <div class="card">
+    <h3>M7 &mdash; Ship to a Tester</h3>
+    <p><code>T1</code> &middot; Size S &middot; Depends on: M4, M5, M6</p>
+    <p><strong>Definition of done:</strong> A person who is not you installs the app from TestFlight, imports their own deck, plays a game against a bot, and a crash they hit appears in your error tracker with a usable stack trace.</p>
+    <p><strong>Includes:</strong> Apple Developer Program enrollment &middot; TestFlight build + release notes &middot; Sentry integration &middot; onboarding/first-run pass &middot; crash-free smoke test on a second physical device.</p>
+  </div>
+
+  <h2 id="tiers">Tier legend</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Tier</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>T0</code></td><td>Build it, works on my machine.</td></tr>
+      <tr><td><code>T1</code></td><td>Someone else can use it without me present.</td></tr>
+      <tr><td><code>T2</code></td><td>Could survive customers or a teammate.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="linear">Where the issues live</h2>
+  <p>Milestone-to-issue mapping lives in Linear, under the <code>MTGDeckTester</code> team. Linear is the human UI for this plan &mdash; this page is the durable record of intent, Linear is where day-to-day status actually moves.</p>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Confirm or reject conflict C1 in <a href="../00-source/contradictions.html">00-source/contradictions.html</a> &mdash; it decides whether this milestone tree is the right one.</li>
+    <li>Work milestones in order; nothing here is meant to be parallelized by a solo developer.</li>
+    <li>When a milestone's definition of done is met, check it against the matching Linear issues before moving on.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

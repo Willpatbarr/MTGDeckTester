@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contradictions Ledger — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#summary">Summary</a>
+    <a href="#ledger">Full ledger</a>
+    <a href="#c1">C1 &mdash; rules engine depth</a>
+    <a href="#c8">C8 &mdash; priority timeout</a>
+    <a href="#c13">C13 &mdash; fixed battlefield</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 00-source &rsaquo; Contradictions Ledger</div>
+    <h1>Contradictions Ledger</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> every place the source documents disagree with themselves, with each other, or with a diagram, and how each was resolved. <strong>What to do with it:</strong> read the summary strip, then read C1, C8, and C13 in full before trusting anything downstream that depends on them &mdash; those three are the ones this plan needs your eyes on.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Fourteen conflicts were found across the source dump; eleven are resolved with no further input needed, and three &mdash; C1, C8, C13 &mdash; are flagged for the project owner to actually read and confirm.</p>
+
+  <h2 id="summary">Summary</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Metric</th><th>Count</th><th>Which</th></tr></thead>
+    <tbody>
+      <tr><td>Total conflicts logged</td><td>14</td><td>C1&ndash;C14</td></tr>
+      <tr><td>Resolved as genuine conflicts <span class="tag conflict">[CONFLICT]</span></td><td>9</td><td>C1, C2, C3, C4, C5, C6, C8, C11, C13</td></tr>
+      <tr><td>Confirmed as not-really-a-conflict <span class="tag decided">[DECIDED]</span></td><td>3</td><td>C7 (naming only), C9 (architecture vs. delivery), C10 (deliberate, both true)</td></tr>
+      <tr><td>Deferred outright <span class="tag deferred">[DEFERRED]</span></td><td>1</td><td>C12</td></tr>
+      <tr><td>Confirmed agreement, no conflict <span class="tag locked">[LOCKED]</span></td><td>1</td><td>C14</td></tr>
+      <tr><td><strong>Needs the owner's input</strong></td><td><strong>3</strong></td><td><strong>C1</strong> (flagged YES &mdash; the single biggest call in the plan), <strong>C8</strong> and <strong>C13</strong> (flagged "worth a look")</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <span class="label">Needs your eye</span>
+    <p>Three rows below have something in the last column other than "No." <strong>C1</strong> changes the size of the entire MVP by roughly 10&times; and is the biggest single call in this plan. <strong>C8</strong> and <strong>C13</strong> are smaller but each hides a default you might not actually agree with. Full arguments for all three are laid out as cards after the table &mdash; the table row is just the index.</p>
+  </div>
+
+  <h2 id="ledger">Full ledger</h2>
+  <p>Columns: Topic | Position A (source) | Position B (source) | Resolution | Tag | Needs my input?</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead>
+      <tr><th>Topic</th><th>Position A (source)</th><th>Position B (source)</th><th>Resolution</th><th>Tag</th><th>Needs my input?</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>C1 &mdash; Depth of the rules engine</strong> &mdash; the central conflict</td>
+        <td>"Prioritize playability, speed, and deck testing usefulness over complete MTG rules accuracy. The application should avoid implementing a full MTG rules engine until later versions require it." Explicitly excludes priority system, stack resolution, trigger handling, replacement effects. <em>(S1 &sect;2.2, &sect;6.2)</em></td>
+        <td>Official MTG priority rules, official SBAs checked to fixpoint, official replacement/prevention ordering, the full continuous-effects layer system with dependency and timestamp rules, mana as pool objects, official combat, official copy rules &mdash; all marked MVP and all marked "Completed" in the spec status. <em>(S2 &sect;3, &sect;8)</em></td>
+        <td>See full argument in the card below.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved</td>
+        <td><strong>YES</strong></td>
+      </tr>
+      <tr>
+        <td>C2 &mdash; Simple Bot Mode</td>
+        <td>"Simple Bot Mode is always enabled for MVP." Creatures become vanilla, ETBs/flying/trample ignored, artifacts and enchantments do nothing, bots use if/then rules. <em>(S1 &sect;9)</em></td>
+        <td>Not mentioned anywhere. AI answers <code>DecisionRequest</code>s through the same pipeline as humans, has strategy-based difficulty, deterministic randomness, and perfect information. Card simplification is meaningless once the engine resolves cards properly. <em>(S2 &sect;7)</em></td>
+        <td><strong>Position B. Simple Bot Mode is dropped.</strong> It was a workaround for not having a rules engine; C1 removes the reason it existed. Recorded as the road not taken &mdash; if the rules engine slips badly, Simple Bot Mode is the documented fallback.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C3 &mdash; Format &amp; life total</td>
+        <td>"Should the MVP officially support Commander, Modern, Standard&hellip;? Current recommendation: generic MTG decks for MVP." Life total configurable at setup. <em>(S1 &sect;5, &sect;10.2)</em></td>
+        <td>"Format: Commander. Starting life: 40. Commander rules enabled: true. Starting/max hand size: 7." <em>(S2 &sect;1)</em></td>
+        <td><strong>Position B &mdash; Commander, 40 life, commander rules on.</strong> S1 posed it as an open question; S2 answered it. An answered question beats an open one. Configurable life total survives as a setup-screen field with 40 as default.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C4 &mdash; Card data source</td>
+        <td>Decks imported as pasted text (<code>4 Llanowar Elves</code>), stored locally. No card database. Tokens are "fully custom" &mdash; user types name/P/T/color/types; "real / official token lookup may be added later." <em>(S1 &sect;4.1, &sect;7.2)</em></td>
+        <td>Scryfall API is the card source; store gameplay-relevant Scryfall data; store image URLs and cache images locally; text-only fallback render. Manual token picker is "limited to tokens the selected deck is capable of creating" &mdash; which is only knowable from Scryfall's token relations. <em>(S2 &sect;1, &sect;6)</em></td>
+        <td><strong>Position B &mdash; Scryfall.</strong> Arbitrary free-form token creation is dropped; the token picker is deck-derived. Decklist paste format from S1 survives as the import format.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C5 &mdash; Where the rules live</td>
+        <td><code>0.1 - CD</code> in the later diagram files shows <code>RulesEngine</code> as a sibling component of <code>GameEngine</code> and <code>AIEngine</code> under <code>Engines</code>. <em>(S6, S8)</em></td>
+        <td><code>0.1.2.1 - GameEngineCD</code> decomposes <code>GameEngine</code> into six subsystems, one of which is <strong>Rules System</strong> &mdash; "Provides rules knowledge." S2 prose consistently says "The GameEngine implements&hellip;", "The GameEngine follows&hellip;", never "the RulesEngine". <em>(S5, S6, S8, S2 &sect;3)</em></td>
+        <td><strong>Position B &mdash; Rules System is a subsystem inside GameEngine, not a peer engine.</strong> Recency favours A (the box was added later), but specificity beats vagueness: B is a worked-through six-part decomposition plus ~40 lines of matching prose; A is one added rectangle with no decomposition, no interfaces, and no prose support. Practically: rules knowledge is queried synchronously by the Action Processor on every action &mdash; a separate engine boundary buys nothing and costs an indirection.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C6 &mdash; Application layering</td>
+        <td>"Views &rarr; DeckStore / GameEngine / BotEngine &rarr; Models." No ViewModels, no ViewModel layer, no separate card API client. <em>(S1 &sect;3.2, repeated verbatim in S2 &sect;2)</em></td>
+        <td><code>0.1 - CD</code> shows <code>App</code> decomposing into <code>Views</code>, <strong>ViewModels</strong>, <code>Models</code>, <code>Engines</code>, <strong>Database</strong> (Database API + Storage), and <strong>CardAPI</strong>. <em>(S5&ndash;S8)</em></td>
+        <td><strong>Position B &mdash; MVVM with an explicit ViewModel layer, a Database component, and a CardAPI client.</strong> S2's layering line is copied verbatim from S1; it is inherited boilerplate, not a reconsideration, so recency doesn't apply to it. The diagrams are the artifact where layering was actually thought about. <code>DeckStore</code> from the prose maps onto the <code>Database</code> component.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C7 &mdash; AI component name</td>
+        <td>Prose calls it <strong>BotEngine</strong> throughout both specs. <em>(S1 &sect;3.2, S2 &sect;2, &sect;7)</em></td>
+        <td>Diagrams call it <strong>AIEngine</strong>, and the decomposition page is <code>0.1.2.2 - AIEngineCD</code>. <em>(S5&ndash;S8)</em></td>
+        <td><strong>AIEngine.</strong> Cosmetic, but consistency matters more than which one wins. Diagrams are the newer and more detailed artifact, and "AI" matches S2's own section title "AI Architecture". <code>BotEngine</code> is banned from the codebase.</td>
+        <td><span class="tag decided">[DECIDED]</span></td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C8 &mdash; Priority timeout vs. manual advancement</td>
+        <td>"Priority automatically passes after approximately 5 seconds if the active player takes no action." <em>(S2 &sect;3)</em></td>
+        <td>"Turn advancement setting: Manual (default). Manual mode advances one phase/step at a time." <em>(S2 &sect;3)</em> &mdash; same document, same section</td>
+        <td>See full argument in the card below.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved, and the default is <span class="tag proposed">[PROPOSED]</span></td>
+        <td><strong>Worth a look</strong></td>
+      </tr>
+      <tr>
+        <td>C9 &mdash; Undo: core from day one vs. partial in MVP</td>
+        <td>"Undo support is considered a core architectural feature from the beginning to minimize future refactoring." <em>(S2 &sect;7)</em></td>
+        <td>"The MVP may initially support undo for only a subset of actions, with broader coverage added over time." <em>(S2 &sect;7)</em></td>
+        <td><strong>Not a real contradiction &mdash; architecture vs. delivery.</strong> Every <code>GameAction</code> is designed reversible from M2 onward (architecture); the undo feature ships in M6 covering a defined subset. Both statements hold. Recorded here so it isn't mistaken for one later.</td>
+        <td><span class="tag decided">[DECIDED]</span></td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C10 &mdash; Rules fidelity vs. hidden-zone secrecy</td>
+        <td>The engine "follows official Magic: The Gathering priority rules" and enforces target restrictions automatically. <em>(S2 &sect;3)</em></td>
+        <td>"Hidden zones prioritize testing clarity over rules secrecy in MVP. All players may inspect all hands and libraries." Library search shows the entire library with no legality filter. Move Zone shows all destinations with no legality validation. <em>(S2 &sect;4)</em></td>
+        <td><strong>Both, deliberately &mdash; this is not an accident.</strong> The engine is rules-accurate; the UI is a testing tool that lets you see and do everything. Visibility is still tracked in the model for future rules-aware modes. Name this explicitly in the architecture doc as the <strong>"strict engine, permissive UI"</strong> principle so it isn't 'fixed' by mistake later.</td>
+        <td><span class="tag decided">[DECIDED]</span></td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C11 &mdash; Mulligans</td>
+        <td>"Mulligan support" is listed as supported MVP gameplay. <em>(S1 &sect;6.1)</em></td>
+        <td>S2 specifies starting hand size 7 and max hand size 7 but <strong>never mentions mulligans anywhere.</strong> <em>(S2)</em></td>
+        <td><strong>Position A &mdash; mulligans are in.</strong> This is a silent regression from S2's reorganization, not a decision to cut them. A deck-testing tool whose entire first use case is "test opening hands and mulligans" (S1 &sect;1, restated in S2 &sect;1 as a goal) cannot ship without them. London mulligan (current Commander rule).</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C12 &mdash; Commander damage</td>
+        <td>Listed under "Not Included in MVP". <em>(S1 &sect;6.2)</em></td>
+        <td>Command Zone UI "Displays commander, commander tax, and future commander damage" &mdash; i.e. also deferred. But S2 also sets Format: Commander with 40 life and commander rules enabled. <em>(S2 &sect;1, &sect;4)</em></td>
+        <td><strong>Both sources defer it, so it's deferred &mdash; but flag the incoherence.</strong> "Commander rules enabled: true" with no commander damage means a real loss condition is missing from the only supported format. Deferred to post-MVP with an explicit trigger: the first time a test game should have ended by commander damage and didn't. <code>timesCommandCast</code> is already in the Player model, so commander tax works; damage tracking is a small addition on top.</td>
+        <td><span class="tag deferred">[DEFERRED]</span></td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>C13 &mdash; Fixed single-screen battlefield vs. iPhone-first</td>
+        <td>"Human battlefield uses a fixed single-screen play area. No zooming, panning, or scrolling in MVP." "Fixed card size." "Cards must remain fully visible while being positioned." <em>(S2 &sect;5)</em></td>
+        <td>"Universal architecture with iPhone-first MVP UI." <em>(S2 &sect;1)</em> &mdash; and the format is Commander, which routinely reaches 20&ndash;40 permanents per player</td>
+        <td>See full argument in the card below.</td>
+        <td><span class="tag conflict">[CONFLICT]</span> &rarr; resolved, mitigation <span class="tag deferred">[DEFERRED]</span></td>
+        <td><strong>Worth a look</strong></td>
+      </tr>
+      <tr>
+        <td>C14 &mdash; Deck/role model &mdash; no contradiction, confirming</td>
+        <td>"Decks are uploaded once and can be used by either humans or bots. A deck has no assigned role." <em>(S1 &sect;2.1)</em></td>
+        <td>"Decks are role-agnostic and can be used by players or bots." <em>(S2 &sect;1)</em></td>
+        <td>Agreement across both specs. Recorded as <span class="tag locked">[LOCKED]</span> so nobody re-opens it.</td>
+        <td><span class="tag locked">[LOCKED]</span></td>
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout" id="c1">
+    <span class="label">C1 &mdash; Depth of the rules engine &mdash; the central conflict &mdash; <strong>needs your input</strong></span>
+    <p><strong>Position A</strong> <em>(S1 &sect;2.2, &sect;6.2)</em>: "Prioritize playability, speed, and deck testing usefulness over complete MTG rules accuracy. The application should avoid implementing a full MTG rules engine until later versions require it." S1 explicitly excludes the priority system, stack resolution, trigger handling, and replacement effects from scope.</p>
+    <p><strong>Position B</strong> <em>(S2 &sect;3, &sect;8)</em>: official MTG priority rules, official state-based actions checked to fixpoint, official replacement/prevention ordering, the full continuous-effects layer system with dependency and timestamp rules, mana as explicit pool objects, official combat, and official copy rules &mdash; all marked MVP, and all marked "Completed" in the spec's own status tracking.</p>
+    <p><strong>Resolution: Position B.</strong> The direction of travel from S1 to S2 is unmistakable &mdash; the project moved from "avoid a rules engine" to "eight rules subsystems, each individually worked through and marked Completed." S2 is also vastly more considered: S1 devotes two sentences to this question, S2 devotes roughly 40 specified behaviours to it. Two tie-breaking rules point the same direction here: specificity beats vagueness, and direction of travel beats any single note.</p>
+    <p>This reads as <strong>you changing your mind over time</strong>, not a live disagreement between two documents you hold simultaneously. But the consequence is real and large: <strong>accepting Position B makes the MVP roughly 10&times; bigger than S1 originally described.</strong> That's mitigated structurally by milestone sequencing &mdash; M2 ships a fully playable manual sandbox <em>before</em> any rules subsystem is written, so there's a usable product at the halfway point even if the rules engine takes longer than planned. See <a href="../04-plan/milestones.html">04-plan/milestones.html</a> for that sequencing.</p>
+    <p><strong>Why this needs your input:</strong> this is the single biggest call in the entire plan. If you disagree with Position B, the whole milestone tree changes &mdash; M3 and M4 (Rules Core, Combat &amp; Copy Effects) shrink or disappear, and the fallback documented at C2 (Simple Bot Mode) becomes the actual plan instead of a safety net.</p>
+  </div>
+
+  <div class="callout" id="c8">
+    <span class="label">C8 &mdash; Priority timeout vs. manual advancement &mdash; worth a look</span>
+    <p>Both statements come from the <em>same document, same section</em> of S2 &sect;3, and they fight each other: "Priority automatically passes after approximately 5 seconds if the active player takes no action" versus "Turn advancement setting: Manual (default). Manual mode advances one phase/step at a time."</p>
+    <p><strong>Resolution:</strong> a 5-second auto-pass in a solo <em>testing</em> tool is actively hostile &mdash; you lose priority while thinking about a line of play. The timeout ships as a setting, <strong>default OFF</strong>. Manual advancement stays the default and remains authoritative. Auto-pass is opt-in, and is only meaningful when turn advancement is separately set to Automatic.</p>
+    <p>This default is recorded as <span class="tag proposed">[PROPOSED]</span> (P3 in the proposed-decisions list) precisely because it's a judgment call, not something either source settled. <strong>If you actually wanted the 5-second timer on by default</strong> &mdash; say so, and this flips.</p>
+  </div>
+
+  <div class="callout" id="c13">
+    <span class="label">C13 &mdash; Fixed single-screen battlefield vs. iPhone-first &mdash; worth a look</span>
+    <p>Both statements are in S2 and they don't fit together. S2 &sect;5: "Human battlefield uses a fixed single-screen play area. No zooming, panning, or scrolling in MVP." "Fixed card size." "Cards must remain fully visible while being positioned." S2 &sect;1: "Universal architecture with iPhone-first MVP UI" &mdash; and the format is locked to Commander (C3), which routinely reaches 20&ndash;40 permanents per player.</p>
+    <p>A non-scrolling, fixed-size battlefield on an iPhone screen holds roughly 12&ndash;15 cards before it becomes unusable &mdash; well short of a real Commander board.</p>
+    <p><strong>Resolution:</strong> keep the fixed, no-scroll play area exactly as specified for MVP. It's the simpler build and it preserves the freeform drag model that the rest of the battlefield UI depends on. Running out of room is treated as the <em>documented trigger</em> for one of two follow-ups, neither built now: (a) pinch-zoom on the play area, or (b) the "Clean Up Board" auto-organize feature S2 already anticipates elsewhere. This mitigation is recorded as <span class="tag deferred">[DEFERRED]</span> in the feature inventory (see <a href="../01-product/features.html">01-product/features.html</a>, Should-have list).</p>
+    <p><strong>Why this is worth a look:</strong> you may already know this will bite you the first time you actually play a full Commander game on the device. The resolution above assumes you'd rather ship the simple version and hit the wall than build zoom/cleanup speculatively &mdash; confirm that's the trade-off you want.</p>
+  </div>
+
+  <div class="callout good">
+    <span class="label">Closing note</span>
+    <p>Nothing else in the dump conflicts. S3 (<code>Untitled document.docx</code>) is empty, and S4 (<code>mtg-deck-tester-map.html</code>) is generated from S2 &mdash; neither introduces an independent position, so neither could contradict anything.</p>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Read the three callout cards above (C1, C8, C13) and confirm, adjust, or override each resolution.</li>
+    <li>If C1 changes, revisit <a href="../04-plan/milestones.html">04-plan/milestones.html</a> before treating M3/M4 as settled.</li>
+    <li>If C8 or C13 change, update the corresponding row in <a href="../01-product/decisions.html">01-product/decisions.html</a>'s <code>[PROPOSED]</code> list (P3 and P4).</li>
+    <li>For the raw text these resolutions are drawn from, see <a href="index.html">index.html</a> and the files in <code>raw/</code>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Overview — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#layering">Layering</a>
+    <a href="#component-view">Component view</a>
+    <a href="#gameengine-internals">GameEngine internals</a>
+    <a href="#aiengine-pipeline">AIEngine pipeline</a>
+    <a href="#interaction-contract">Engine interaction contract</a>
+    <a href="#principles">Architectural principles</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 02-architecture &rsaquo; Architecture Overview</div>
+    <h1>Architecture Overview</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the component layering, the three internal diagrams, and the six non-negotiable architectural principles the app is built on. &nbsp;<strong>What to do with it:</strong> read this before touching any engine, view, or model code.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Views talk to ViewModels, ViewModels only ever send human actions into GameEngine, GameEngine is the sole authority on game state and asks AIEngine for decisions the same way it would ask a human, and six principles keep that arrangement from eroding.</p>
+
+  <h2 id="layering">Layering</h2>
+  <p>Resolved per contradiction C5 and C6 — see the note at the end of this section.</p>
+
+  <div class="tablewrap">
+  <pre><code>App
+├─ Views          SwiftUI. Battlefield, Enlarged Card, Ordered Zone Viewer,
+│                 Tokens UI, Command Zone, Mana/Turn/Replay UI
+├─ ViewModels     Observable state adapters. Own no rules logic.
+├─ Models         CardDefinition · GameCard · Player · Zone · Game · GameAction
+│                 · Turn · CardLayout · CounterStack · PowerToughness · Deck
+├─ Engines
+│  ├─ GameEngine  Engine Interface · Game Flow Coordinator · Action Processor
+│  │              · Rules System · History System · Game State Store
+│  └─ AIEngine    AI Interface · Game Knowledge View · Action Generator
+│                 · Action Evaluator · Decision Selector
+├─ Database       Database API · Storage  (decks, card cache, game saves)
+└─ CardAPI        Scryfall client + image cache</code></pre>
+  </div>
+
+  <h2 id="component-view">Component view</h2>
+  <p>How the top-level components talk to each other, end to end.</p>
+
+  <div class="mermaid-wrap"><pre class="mermaid">
+graph TD
+    V[Views<br/>SwiftUI] --> VM[ViewModels]
+    VM -->|human actions| GE[GameEngine]
+    GE -->|state + DecisionRequest| VM
+    GE -->|DecisionRequest<br/>permitted game state| AI[AIEngine]
+    AI -->|chosen action / DecisionResponse| GE
+    GE -->|card data - save/load| DB[Database]
+    DB --> ST[(Storage)]
+    DB --> API[CardAPI<br/>Scryfall client]
+    GE --> M[Models]
+    AI -.reads.-> M
+    VM -.reads.-> M
+  </pre></div>
+
+  <h2 id="gameengine-internals">GameEngine internals</h2>
+  <p>Six subsystems, from <code>0.1.2.1 - GameEngineCD</code>.</p>
+
+  <div class="mermaid-wrap"><pre class="mermaid">
+graph LR
+    EI[Engine Interface<br/>entry/exit] --> GFC[Game Flow Coordinator<br/>controls what happens next]
+    GFC --> AP[Action Processor<br/>validates + processes intents]
+    AP --> RS[Rules System<br/>provides rules knowledge]
+    AP --> GSS[Game State Store<br/>owns game state]
+    AP --> HS[History System<br/>stores action history]
+    RS --> GSS
+    HS --> GSS
+  </pre></div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Subsystem</th><th>Stated responsibility</th></tr></thead>
+    <tbody>
+      <tr><td>Engine Interface</td><td>Entry and exit point for the engine</td></tr>
+      <tr><td>Game Flow Coordinator</td><td>Controls what happens next</td></tr>
+      <tr><td>Action Processor</td><td>Validates and processes intents</td></tr>
+      <tr><td>Rules System</td><td>Provides rules knowledge</td></tr>
+      <tr><td>History System</td><td>Stores history of actions</td></tr>
+      <tr><td>Game State Store</td><td>Owns state of the game</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="aiengine-pipeline">AIEngine pipeline</h2>
+  <p>Five stages, from <code>0.1.2.2 - AIEngineCD</code>. It is a pipeline, not a set of independent services — each stage feeds the next.</p>
+
+  <div class="mermaid-wrap"><pre class="mermaid">
+graph LR
+    AII[AI Interface] -->|decision context| GKV[Game Knowledge View]
+    GKV -->|permitted game information| AG[Action Generator]
+    AG -->|legal candidates| AE[Action Evaluator]
+    AE -->|scored candidates| DS[Decision Selector]
+    DS -->|selected response| AII
+  </pre></div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Stage</th><th>Stated responsibility</th></tr></thead>
+    <tbody>
+      <tr><td>AI Interface</td><td>Entry and exit point for the engine</td></tr>
+      <tr><td>Game Knowledge View</td><td>Builds context; receives permitted game information</td></tr>
+      <tr><td>Action Generator</td><td>Generates legal candidate actions</td></tr>
+      <tr><td>Action Evaluator</td><td>Scores how useful each action is</td></tr>
+      <tr><td>Decision Selector</td><td>Chooses from the scored candidates, returns a Selected Response</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="interaction-contract">Engine interaction contract</h2>
+  <p>From <code>0.1.2 - EnginesCD</code> — the five labelled message flows between App, GameEngine, AIEngine, and Database.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>From</th><th>To</th><th>Message</th></tr></thead>
+    <tbody>
+      <tr><td>App</td><td>GameEngine</td><td>Human actions</td></tr>
+      <tr><td>GameEngine</td><td>AIEngine</td><td>Decision request, permitted game state</td></tr>
+      <tr><td>AIEngine</td><td>GameEngine</td><td>Chosen action or response</td></tr>
+      <tr><td>GameEngine</td><td>App</td><td>State + decision requests</td></tr>
+      <tr><td>GameEngine</td><td>Database</td><td>Card data + save/load</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="principles">Architectural principles</h2>
+  <p>These six principles govern every future decision in this codebase. When a future change seems to conflict with one of these, the principle wins by default — reopen it explicitly, don't drift past it silently.</p>
+
+  <div class="callout">
+    <span class="label">Do not fix this by mistake</span>
+    <p><strong>Principle 1 — Strict engine, permissive UI.</strong> The engine is rules-accurate. The UI is a testing tool: it shows all hands and libraries, offers every zone destination, and never blocks an action. A future contributor who notices "the UI lets you do illegal things" and tightens it has broken the product on purpose disguised as a bug fix. See contradiction C10.</p>
+  </div>
+
+  <div class="card">
+    <h3>Principle 2 — The UI never infers rules state</h3>
+    <p>Attackers, blockers, attachments, layers, and legality are explicit GameEngine state, read by the UI, never derived in it. If a view has to compute a rules answer itself, that logic belongs in the engine instead.</p>
+  </div>
+
+  <div class="card">
+    <h3>Principle 3 — One decision pipeline</h3>
+    <p>Humans and AI answer the same <code>DecisionRequest</code>. The AI never mutates state directly — it only ever produces a <code>DecisionResponse</code>, exactly like a human would.</p>
+  </div>
+
+  <div class="card">
+    <h3>Principle 4 — Determinism is load-bearing</h3>
+    <p>Every random choice goes through the game's seeded generator. Replay is exact, which is what makes undo, redo, save, load, and step-through replay all possible on top of the same action history.</p>
+  </div>
+
+  <div class="card">
+    <h3>Principle 5 — Layout is not game state</h3>
+    <p>Moving a card within a zone is a layout operation. It produces no <code>GameAction</code>, is not undoable, and is excluded from replay.</p>
+  </div>
+
+  <div class="callout">
+    <span class="label">Do not fix this by mistake</span>
+    <p><strong>Principle 6 — Rules knowledge is a subsystem, not a service.</strong> No <code>RulesEngine</code> type exists. Rules knowledge lives in the Rules System subsystem inside GameEngine, queried synchronously by the Action Processor. A future contributor who "notices" GameEngine and AIEngine both exist as peer engines and adds a peer <code>RulesEngine</code> to match is undoing a deliberate decision, not correcting an oversight. See contradiction C5.</p>
+  </div>
+
+  <p>Principles 1 and 6 both came out of resolved conflicts between sources, not from a clean original design. See <a href="../00-source/contradictions.html">../00-source/contradictions.html</a> for the full reasoning behind C5 (where the rules live) and C6 (application layering).</p>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Read <a href="data-model.html">data-model.html</a> for the field-level shape of every model named in the layering diagram.</li>
+    <li>Read <a href="conventions.html">conventions.html</a> before writing any engine code — it enforces principles 3, 4, and 6 as concrete rules.</li>
+    <li>If a change seems to require breaking one of the six principles, treat that as a decision worth writing down, not a silent edit.</li>
+  </ol>
+</main>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark',
+    themeVariables: { background:'#1d2126', primaryColor:'#23282e', primaryTextColor:'#e8eaed',
+      primaryBorderColor:'#3a424b', lineColor:'#6cc394', fontSize:'14px' } });
+</script>
+<script src="../assets/nav.js"></script>
+</body>
+</html>

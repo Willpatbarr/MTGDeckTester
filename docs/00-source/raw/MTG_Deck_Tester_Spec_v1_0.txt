@@ -1,0 +1,491 @@
+MTG Deck Tester
+Product Specification · v1.0
+Status: Draft · Reorganized decision record
+Purpose. This specification is the source of truth, and all future finalized design decisions must be incorporated directly into it. This revision consolidates the earlier chronological planning trail by topic; answered prompts and duplicated summaries have been removed without changing their decisions.
+Document Map
+1. Product Scope & Foundations
+2. Core Architecture & Data Model
+3. Rules Engine & Gameplay Flow
+4. Zones, Search & Card Inspection
+5. Battlefield UI & Interaction
+6. Tokens
+7. History, Persistence & AI
+8. Remaining Scope
+1. Product Scope & Foundations
+Vision
+Build a SwiftUI app for testing Magic: The Gathering decks against one or more AI-controlled opponents.
+Goals: test deck consistency, opening hands, mana curves, matchups, new cards, and gameplay lines.
+Design Philosophy
+Decks are role-agnostic and can be used by players or bots.
+Track core MTG concepts from day one to minimize future refactors.
+Prioritize playability and deck testing usefulness over full rules accuracy for MVP.
+MVP Defaults
+Format: Commander
+Starting life: 40
+Starting hand size: 7
+Maximum hand size: 7
+Commander rules enabled: true
+Platform Strategy
+Universal architecture with iPhone-first MVP UI.
+Deck Management
+Upload decklists asynchronously; no deck editor in MVP.
+Unresolved cards remain in decks and can be retried or corrected later.
+Card Data & Images
+Store gameplay-relevant Scryfall data only.
+Support double-faced and multi-face cards.
+Store image URLs only and cache images locally.
+If an image is unavailable, render a text-only card view.
+2. Core Architecture & Data Model
+Architecture
+Views → DeckStore/GameEngine/BotEngine → Models.
+Models: CardDefinition, GameCard, Player, Zone, Game, GameAction.
+GameCard Model
+Persistent gameCardId.
+Tracks owner, controller, currentZone, visibility, token state, power/toughness, damageMarked, tapped state, summoning sickness, attachments, counters, and transition history.
+Tokens are GameCards with isToken = true.
+Zones
+Shared: Battlefield, Exile, Stack, Command Zone.
+Player-owned: Library, Hand, Graveyard.
+All zones are ordered and have stable zoneIds.
+Players
+Persistent playerId and seatPosition.
+Track starting/current life totals, mana pool, counters, and commander state.
+Game
+Tracks gameId, randomSeed, timestamps, players, turnNumber, currentTurnPlayerId, turnControllerPlayerId, phase, step, priorityPlayerId, action history, and win/loss state.
+Turn
+currentTurnPlayerId, turnControllerPlayerId, phase, step, priorityPlayerId
+Actions
+Every action has actionId, actionSequenceNumber, and playerId.
+Two action types: SimpleAction and ComplexAction.
+Complex actions create resolution pipelines composed of simple actions.
+Complex actions track: pending, resolving, resolved, cancelled.
+Decision Pipeline
+The GameEngine determines which player is responsible for every gameplay decision.
+The engine creates a DecisionRequest containing the responsible player, source, available choices, and constraints.
+Humans and bots both answer through the same DecisionRequest/DecisionResponse pipeline.
+This pipeline is used for sacrifices, discards, searches, modal choices, color selection, creature type selection, and similar effects.
+3. Rules Engine & Gameplay Flow
+Turn Flow
+Turn advancement setting: Manual (default) or Automatic.
+Manual mode advances one phase/step at a time.
+Automatic mode advances whenever no input is required.
+Triggered abilities are detected automatically by the engine.
+Priority & Trigger Handling (MVP Decisions)
+Priority automatically passes after approximately 5 seconds if the active player takes no action. This timeout is configurable in the future.
+The engine follows official Magic: The Gathering priority rules.
+When multiple triggered abilities controlled by the same player trigger simultaneously, that player chooses their order on the stack.
+The GameEngine automatically detects and handles mandatory triggered abilities.
+When an optional ('may') triggered ability triggers, the responsible player is prompted whether to use it. If accepted, the trigger is placed onto the stack.
+If multiple optional and/or mandatory abilities controlled by the same player trigger simultaneously, the player orders all accepted triggers before priority is passed.
+Targeting
+Multi-choice prompts are consolidated into one UI when possible.
+Targets are selected directly from the battlefield.
+Players are targetable directly.
+Target restrictions are enforced automatically.
+Developer Mode may bypass targeting restrictions.
+State-Based Actions (MVP)
+State-Based Actions (SBAs) follow the official Magic: The Gathering rules exactly.
+The GameEngine repeatedly checks SBAs until no further SBAs apply before any player receives priority.
+Triggered abilities created while performing SBAs are collected and placed onto the stack only after all SBAs have finished resolving.
+Developer Mode may temporarily disable SBA processing to allow testing of otherwise impossible game states.
+SBA processing is internal to the GameEngine and is not surfaced as individual user-visible steps.
+Game history and replay record the resulting GameActions rather than each individual SBA evaluation.
+Replacement & Prevention Effects (MVP)
+Replacement effects are evaluated before a GameAction is committed.
+When multiple replacement effects may apply to the same event, the GameEngine follows the official Magic: The Gathering ordering rules.
+Developer Mode may temporarily disable replacement and prevention effects for testing.
+Game history records both the originally attempted event and the final event after replacement/prevention effects have been applied.
+Replay executes the final resolved event while preserving the original attempted event for debugging.
+Prevention effects share the same processing pipeline as replacement effects.
+Continuous Effects & Layer System (MVP)
+The GameEngine implements the official Magic: The Gathering continuous-effect layer system from the beginning.
+Every continuous effect is represented as its own engine object rather than directly mutating a card's derived characteristics.
+Derived characteristics, including power, toughness, colors, types, abilities, and similar values, are recomputed from base values whenever relevant game state changes.
+The engine follows the official dependency and timestamp rules exactly.
+Developer Mode exposes a complete layer-evaluation breakdown showing base values, each applied effect, its layer/sublayer, and the final derived result.
+Mana System (MVP)
+Mana exists as explicit objects in each player's mana pool until spent or emptied.
+The GameEngine determines all legal mana payment combinations; the UI only presents valid choices.
+Mana abilities resolve immediately without using the stack, following official MTG rules.
+The engine supports automatic mana payment with fallback to manual payment whenever multiple meaningful choices exist.
+The mana pool is displayed as a persistent UI element showing all currently floating mana.
+Combat System (MVP)
+The GameEngine follows the official Magic: The Gathering combat sequence, including beginning of combat, declare attackers, declare blockers, combat damage, and end of combat.
+The GameEngine enforces all attack and block legality, including restrictions and requirements such as summoning sickness, flying, menace, vigilance, and similar mechanics.
+The engine automatically assigns combat damage according to official MTG rules and only prompts players when the rules require a choice, such as blocker order or trample assignment.
+Attackers, blockers, and combat relationships are represented as explicit GameEngine state rather than inferred from the UI.
+Developer Mode exposes the complete combat state, including attackers, blockers, assignment order, damage groups, and first-strike or double-strike handling.
+Copy Effects
+Follow official MTG copy rules.
+Represent copy effects as engine objects.
+Copied spells/abilities become independent stack objects.
+Prompt when new targets may be chosen.
+Store copyable choices explicitly.
+4. Zones, Search & Card Inspection
+Hidden Zone Behavior
+Hidden zones prioritize testing clarity over rules secrecy in MVP.
+All players may inspect all hands and libraries.
+Visibility is still tracked for future rules-aware modes.
+Ordered Zone Viewer
+Shared viewer for Library, Hand, Graveyard, Exile, and Stack.
+Behavior is configured per zone rather than separate implementations.
+Exile
+Default chronological view with optional grouping by Exile Tag.
+Exile tags are assigned automatically from the exile source when applicable.
+Active tags are removed when a card leaves exile but preserved in transition history.
+Stack
+Stack uses the shared Ordered Zone Viewer.
+Users may drag to reorder the stack.
+Automatic triggers are placed on the stack using APNAP ordering, then may be reordered.
+Stack resolves automatically until player interaction is required.
+Command Zone
+Persistent UI area on the main screen.
+Displays commander, commander tax, and future commander damage.
+Library Search UI
+Searching a library displays the entire library.
+The UI does not filter cards to only legal search results in MVP.
+The player is responsible for selecting a legal card.
+Future rules-aware modes may optionally filter eligible cards.
+Shared Search System
+MVP supports searching within the manual token picker.
+The application uses a shared search implementation across searchable card lists.
+The same search component is reused for libraries, hands, graveyards, exile, stack, token picker, and other non-battlefield card lists.
+Battlefield search is out of scope for MVP.
+Search Filtering
+Searchable card lists support text search only in MVP.
+Filtering by color, mana value, card type, or other attributes is not included in MVP.
+Advanced filtering may be added in a future release using the shared search system.
+Search Session Behavior
+Searchable card lists always open with an empty search query.
+Closing a searchable list clears its current search.
+Search queries are not preserved between openings in MVP.
+Search Field Focus
+Searchable card lists do not automatically focus the search field when opened.
+The on-screen keyboard is not shown automatically.
+Users may tap the search field at any time to begin searching.
+Search Ordering
+All searchable zone viewers preserve the natural order of their underlying zone.
+Searching filters the existing order rather than sorting alphabetically.
+Search fields do not automatically receive focus when a viewer is opened.
+The on-screen keyboard is not shown automatically.
+The enlarged card view is a persistent modal overlay opened from the battlefield by long pressing a card.
+Opening and Dismissal
+Long press opens the enlarged card view.
+The view remains open until explicitly dismissed.
+Dismissal options include close button, tap outside, or swipe down.
+The earlier hold-to-preview option is not part of MVP.
+Allowed Actions
+View full card image if available.
+View generated text-only fallback if image is unavailable.
+View runtime state such as counters, damage, tapped state, summoning sickness, visibility, attachments, and controller.
+Add counters.
+Increment or decrement existing counters.
+Move the card to another zone.
+Not Allowed in Enlarged View
+Tap or untap the card.
+Drag or reposition the card.
+Attach, equip, or enchant cards.
+Perform arbitrary gameplay actions beyond the explicitly supported modal actions.
+Counter Management
+The view includes an Add Counter action.
+Add Counter presents available CounterType values, including custom fallback when needed.
+When a counter type is first added, create a CounterStack for that type.
+Existing counter types display dedicated plus and minus controls.
+If a counter amount reaches zero, remove that CounterStack.
+Counter changes use the shared CounterStack model used by cards and players.
+Move Zone Action
+The enlarged card view includes a Move Zone action.
+For MVP, the Move Zone action shows all possible destination zones rather than only legal destinations.
+Available destinations include Library, Hand, Battlefield, Graveyard, Exile, Stack, and Command Zone.
+Manual zone movement does not validate MTG legality in MVP.
+Zone moves create GameAction entries and ZoneTransition records.
+Future rules-aware validation may filter, warn, or block invalid moves.
+Destination Ownership Rules
+Move to Hand always places the card in its owner's hand.
+Move to Library always places the card in its owner's library.
+Move to Graveyard always places the card in its owner's graveyard.
+Move to Command Zone always places the card in its owner's command zone.
+Move to Exile places the card in the shared exile zone.
+Move to Battlefield places the card under its current controller.
+Move to Stack places the card on the shared stack, with the current controller recorded as the responsible player.
+Library Placement
+When moving a card to library, the user chooses placement.
+Placement options are top, bottom, specific position, and random position.
+Specific position can be counted from top or from bottom.
+If a specific position exceeds the library size, clamp to the furthest valid position.
+Random placement uses the game's deterministic randomness system so replays and simulations remain reproducible.
+Battlefield Placement from Modal
+Cards moved to the battlefield from the enlarged view enter under the card's current controller.
+Entering the battlefield creates a new CardLayout using that controller's default spawn algorithm.
+The new CardLayout receives the next highest zIndex for that controller's battlefield layout.
+Stack Placement from Modal
+Cards moved to the stack enter the shared stack zone.
+The card's current controller is recorded as the responsible player for the stack move.
+The shared stack remains ordered.
+Enlarged Card View Lifecycle
+If the selected card changes zones while the enlarged card view is open, the view remains open.
+The enlarged card view updates immediately to reflect the card's new zone and current state.
+The modal only closes when the user explicitly dismisses it.
+5. Battlefield UI & Interaction
+Overall Layout
+Human player's battlefield is the primary focus.
+Opponent battlefields use collapsible, system-managed panels.
+Human battlefield uses a fixed single-screen play area.
+No zooming, panning, or scrolling in MVP.
+Human Battlefield
+Freeform drag-and-drop positioning.
+Immediate press-and-drag interaction.
+Fixed card size.
+Long press opens enlarged card inspection view.
+Single-card interaction only (no multi-select).
+Cards may overlap freely.
+Opponent Battlefields
+Non-freeform layout.
+Compact, automatically organized display.
+Expanded from collapsible panels when needed.
+Battlefield Organization
+Each player's battlefield is a single freeform play area.
+A player's battlefield is not subdivided into sections (such as Lands, Creatures, or Artifacts).
+All permanents may be positioned anywhere within that player's battlefield.
+Card type does not affect placement or spawn region within the battlefield.
+Card Interaction
+Tap toggles tapped/untapped state.
+Tapped cards rotate automatically 90 degrees.
+Manual arbitrary rotation is not supported.
+Long press does not change z-order.
+Card Rotation
+Battlefield cards rotate only as part of the tapped/untapped state.
+Untapped cards are displayed at 0°.
+Tapped cards are displayed at 90°.
+Players cannot manually rotate cards for organizational or reminder purposes.
+Drag Interaction
+Cards follow the user's finger continuously while being dragged.
+Dragging uses smooth, real-time movement rather than snapping to discrete positions.
+The dragged card maintains its selection effect throughout the drag operation.
+Drag and Drop Actions
+Dragging a card never performs gameplay actions automatically.
+Dragging is used exclusively to reposition cards within the battlefield.
+Attachments, piles, and other gameplay relationships are created only through explicit gameplay actions.
+Dropping one card onto another has no special behavior in MVP or future rules modes unless explicitly invoked by a gameplay action.
+Selection Feedback
+Cards display a visible selection effect while selected or being dragged.
+The selection effect may be implemented as an outline, glow, or similar visual treatment.
+The effect is purely visual and has no gameplay meaning.
+Battlefield Entry Animation
+For MVP, permanents entering the battlefield appear instantly at their spawn location.
+No entry animation, fade, or movement animation is performed.
+Animated battlefield entry may be added in a future release.
+Layout Persistence
+Card positions are saved with the game state.
+Layout data is UI-only and excluded from rules processing and replay determinism.
+Layout is scoped to a specific game instance.
+CardLayout Model
+gameCardId
+xPosition
+yPosition
+zIndex
+Spawn Rules
+First battlefield card spawns at the top-left origin.
+Subsequent cards spawn near the previous spawn location using a small offset.
+New cards always receive the highest zIndex.
+Spawn position is determined per controller.
+Layout Lifecycle
+Leaving the battlefield deletes the card's CardLayout.
+Returning to the battlefield creates a new CardLayout.
+Changing controllers resets layout and respawns the card on the new controller's battlefield.
+Tokens use identical layout behavior to non-token permanents.
+Returning Permanents
+When a permanent leaves the battlefield, its CardLayout is destroyed.
+If that permanent later returns to the battlefield, a new CardLayout is created.
+Returning permanents always use the default battlefield spawn algorithm.
+This behavior reinforces the MTG rule that a permanent returning to the battlefield is treated as a new object.
+Z-Ordering
+Newly spawned cards receive the highest zIndex.
+Dragging a card moves it to the highest zIndex.
+The most recently moved or spawned card appears on top.
+Boundary Rules
+Cards must remain fully visible while being positioned.
+Tapped cards may extend beyond battlefield bounds after automatic rotation.
+No grid snapping or alignment guides.
+Position Locking
+MVP does not support locking battlefield card positions.
+All battlefield cards remain draggable at all times.
+Position locking may be considered as a future quality-of-life feature if needed.
+Layout Actions
+Moving cards within the same zone is a layout operation, not a GameAction.
+Layout changes are not recorded in the GameAction history.
+Layout changes are not included in gameplay undo or redo.
+Only actions that modify game state create GameActions.
+Attached Permanents
+Attached permanents are visually attached to the permanent they are attached to.
+Attached cards are rendered underneath the host card with roughly the bottom half of the attached card remaining visible.
+Attachment relationships are tracked by the GameEngine and reflected automatically by the UI.
+Moving the host permanent automatically moves all attached permanents while preserving their layout.
+Attached permanents cannot be freely positioned independently while attached.
+Multiple Attachments
+If multiple permanents are attached to the same host, they are displayed as a vertical fan beneath the host card.
+Each attached card is slightly offset so its visible portion remains accessible.
+The host card remains fully visible above the attachment stack.
+The attachment fan moves as a single unit with the host permanent.
+Attachment Stack Layout
+Attached permanents are displayed as a single vertical column beneath the host permanent.
+Each subsequent attached permanent is placed beneath the previous attached permanent.
+Only the bottom portion of each attached permanent remains visible.
+The attachment column is aligned with the host card and updates automatically as attachments are added or removed.
+Controller Changes and Attachments
+When control of a permanent changes, the GameEngine determines which attachments remain legal.
+The UI does not implement attachment legality rules.
+The UI rebuilds the visual attachment layout directly from the GameEngine's resulting attachment relationships.
+Any attachments that are no longer legal are handled by the GameEngine according to MTG rules.
+Face-Down Cards
+Face-down permanents use a single generic card back in MVP.
+The GameEngine continues to track the underlying face-down state (such as Morph, Manifest, or Cloak).
+Distinct visual treatments for different face-down states are deferred to a future release.
+Battlefield Counter Display
+Counters are displayed on the battlefield only when a card has one or more counters.
+Cards with zero counters display no counter UI.
+Counter values update immediately as they change.
+Multiple Counter Display
+Each counter type is displayed as its own badge.
+Each badge shows the counter type and quantity (for example, '+1/+1 ×2' or 'Shield ×1').
+Counter badges are displayed directly beneath the card rather than overlaid on the card face.
+Badges wrap into additional rows beneath the card when necessary.
+Battlefield Damage Display
+Damage marked on permanents is displayed directly on the battlefield.
+Damage uses the same visibility philosophy as counters: it is shown only when present.
+Damage indicators are displayed beneath the card alongside counter badges.
+Damage values update immediately as damage is marked or removed.
+Battlefield Card Status Display
+The battlefield displays condensed gameplay information around each card.
+A quantity indicator is shown above the card when multiple identical permanents are represented together (primarily tokens).
+The center of the card displays the aggregate temporary power/toughness modification currently affecting the permanent (temporary buffs, debuffs, and marked damage as applicable).
+Individual temporary effects are not shown on the battlefield.
+The lower-left area beneath the card displays counter icons and their quantities.
+The lower-right area beneath the card displays the creature's current power/toughness.
+The current power/toughness display includes indicators showing how much the value differs from the card's base power/toughness.
+Opening the enlarged card view displays the complete breakdown of all continuous effects, temporary modifiers, counters, and damage contributing to the displayed values.
+Active Turn Indicator
+The battlefield visually indicates the active player's turn.
+The indicator should be subtle, such as a glow, outline, or similar highlight around that player's battlefield.
+The turn indicator supplements the turn tracker rather than replacing it.
+Battlefield Annotations
+MVP does not include temporary visual annotations such as arrows, circles, highlights, or planning markers.
+Visual annotations are planned as a future feature.
+Future annotations will be UI-only and will not affect gameplay, game state, or replay determinism.
+6. Tokens
+Token Behavior
+Tokens use the same UI interaction model as nontoken permanents.
+Tokens support dragging, attachments, counters, z-ordering, and the enlarged card view.
+The primary distinction is that tokens are represented internally with isToken = true.
+When a token leaves the battlefield, the GameEngine removes it according to MTG rules.
+Token Grouping
+MVP supports visually grouping identical tokens to reduce battlefield clutter.
+Grouping is a UI feature only; each token remains an independent GameCard in the GameEngine.
+Long-pressing a token enters token selection mode.
+The user may select multiple tokens.
+An "Auto Group" action is available when all selected tokens have identical gameplay state (same card, counters, tapped state, attachments, power/toughness, and all other tracked state).
+Auto Group repositions the selected tokens into a single overlapping stack.
+A quantity indicator above the stack shows how many tokens remain in that stack.
+Dragging the top token away simply moves that token out of the stack and decreases the displayed quantity.
+Moving tokens does not create or remove a formal group object; the stack is purely a visual arrangement created by card positions.
+Grouped Token Status Display
+A grouped token stack displays a single shared set of battlefield status indicators.
+The shared indicators represent only the tokens that remain in the original stack.
+If a token is moved or tapped separately, it leaves the stack and no longer contributes to the shared indicators.
+Only tokens that remain identical in gameplay state may continue sharing a grouped display.
+Token Grouping Workflow
+For MVP, token grouping is available only through token selection mode.
+The application does not automatically suggest or perform token grouping.
+A future 'Clean Up Board' feature may automatically organize the battlefield, including grouping eligible tokens.
+The Clean Up Board feature is user-initiated and never runs automatically.
+Token Creation
+The GameEngine supports automatic token creation from gameplay effects.
+The UI also provides a manual token creation workflow for testing.
+Manual token creation is limited to tokens that the selected deck is capable of creating.
+Manual token creation uses the same underlying GameEngine token creation pipeline as automatic token creation.
+Automatically or manually created tokens use the standard battlefield spawn rules.
+Manual Token Picker
+Manual token creation uses a single scrollable list of available tokens.
+The list is not grouped by the card that creates the token.
+Users simply select the desired token from the list.
+The available list is still limited to tokens the current deck is capable of creating.
+Manual Token Quantity
+The manual token creation workflow allows the user to choose the number of tokens to create before creation.
+The selected quantity is passed to the shared GameEngine token creation pipeline.
+Multiple created tokens follow the normal battlefield spawn rules and are not automatically grouped.
+Manual Token Entry State
+Manually created tokens enter the battlefield using their normal default entry state.
+The manual token creation workflow does not allow choosing tapped or untapped.
+If a specific gameplay effect would create tokens tapped, that behavior is handled by the GameEngine during automatic token creation.
+Manual Token Controller
+The manual token creation workflow allows the user to choose which player will control the created tokens.
+The selected controller is passed to the shared GameEngine token creation pipeline.
+Tokens enter the battlefield under the chosen player's control.
+Manual Permanent Creation
+MVP limits manual permanent creation to tokens only.
+The application does not support manually creating nontoken permanents.
+Nontoken permanents enter the game only through normal gameplay.
+Manual Token Game State
+Manually created tokens inherit the same default game state as tokens created by gameplay effects.
+Manual token creation uses the shared GameEngine token creation pipeline.
+Summoning sickness, turn information, timestamps, and other default entry behavior are initialized exactly as they would be during normal gameplay.
+Manual Token Removal
+MVP does not include a dedicated manual delete token action.
+Tokens are removed using normal gameplay actions such as moving them to the graveyard or exile.
+When a token leaves the battlefield, the GameEngine removes it according to MTG rules.
+This behavior is identical regardless of whether the token was created automatically or manually.
+Manual Token Provenance
+Manually created tokens do not record or reference a source card.
+They are treated simply as tokens that enter the battlefield.
+No creator relationship or debugging metadata is stored for manually created tokens in MVP.
+Manual Token Picker UI
+The manual token picker uses the shared Ordered Zone Viewer rendering system.
+Available tokens are displayed as a scrollable list of rendered token cards.
+The manual token picker reuses the same card rendering components used throughout the application where practical.
+Manual Token Picker Rendering
+The manual token picker reuses the shared card-list rendering used by ordered zone viewers.
+Available tokens are presented as a vertically scrollable list of rendered token cards rather than text-only entries.
+The picker reuses existing card rendering components wherever practical to minimize duplicate UI.
+7. History, Persistence & AI
+Undo System
+The game supports undo functionality.
+The GameEngine is designed with deterministic GameActions that can be reversed.
+Undo support is considered a core architectural feature from the beginning to minimize future refactoring.
+The MVP may initially support undo for only a subset of actions, with broader coverage added over time.
+Multi-Step Undo
+Undo supports stepping backward through multiple previous GameActions.
+Each undo reverses the most recently applied reversible GameAction.
+Players may repeatedly invoke undo to walk backward through the action history.
+This design leverages the existing ordered GameAction history and deterministic action pipeline.
+Redo System
+The game supports redo alongside undo.
+Redo reapplies previously undone GameActions in order.
+Redo is available only while no new GameAction has been performed after an undo.
+Performing a new GameAction clears the redo history.
+AI Architecture
+AI uses the same DecisionRequest pipeline as humans.
+AI never mutates game state directly.
+Difficulty is strategy-based.
+AI uses deterministic randomness.
+MVP AI has perfect information.
+Save / Load / Replay
+Games can be serialized at any point.
+Replay is driven from GameAction history.
+Replay is deterministic.
+Replay supports play, pause, step forward, and step backward.
+Developer Mode can inspect any historical game state during replay.
+8. Remaining Scope
+Planning Guideline
+The goal is to reach development as quickly as possible while eliminating architectural ambiguity. Future questions should focus on engine-defining decisions rather than minor UI polish. If a decision can be safely deferred without causing significant refactoring, defer it until after MVP development.
+Specification Status
+Completed: State-Based Actions
+Completed: Replacement & Prevention Effects
+Completed: Continuous Effects (Layer System)
+Completed: Mana System
+Completed: Combat
+Completed: Copy Effects
+Completed: AI Architecture
+Completed: Save / Load & Replay
+Completed: Final specification cleanup & reorganization
+Remaining: Future Rules Support
+

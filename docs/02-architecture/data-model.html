@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Model — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#source-model">1. As specified in the source diagrams</a>
+    <a href="#resolved-model">2. Resolved model</a>
+    <a href="#class-diagram">Class diagram</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 02-architecture &rsaquo; Data Model</div>
+    <h1>Data Model</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the field-level shape of every core model, as diagrammed and then as resolved. &nbsp;<strong>What to do with it:</strong> use section 2 as the actual model to build against; section 1 is the historical record it was resolved from.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">The CRDs left two field types and one model unresolved — this page shows the original skeleton verbatim, then the completed model with every gap filled.</p>
+
+  <h2 id="source-model">1. As specified in the source diagrams</h2>
+  <p>This is the only field-level source that exists (<code>0.2.x</code> CRDs, <code>MTGCRD.drawio</code>). Reproduced verbatim, unresolved types included, as the raw source-of-record. Do not treat this block as current — see section 2 for the resolved model.</p>
+
+  <div class="tablewrap">
+  <pre><code>Game
+  - gameId: UUID
+  - randomSeed: ?          &lt;-- type unresolved in source
+  - timestamps: Time
+  - players: UUID
+  - turnNumber: Int
+  - currentTurn: Turn
+  - actionHistory
+  + Game(players: List)
+  + passTurn(): Turn
+
+GameCard
+  - cardDefinitionID: UUID
+  - id: UUID
+  - owner: UUID
+  - controller: UUID
+  - currentZone: ref
+  - isVisible: Bool
+  - isToken: Bool
+  - basePowerToughness: PowerToughness
+  - ptModifiers: [String: PowerToughness]
+  - ptCurrent: PowerToughness
+  - isTapped: Bool
+  - isSummoningSick: Bool
+  - attachments: List
+  - counters: map
+  - transitionHistory: List
+
+Player
+  - id: UUID
+  - isUser: Bool
+  - userID?: UUID
+  - startingLife: Int
+  - currentLife: Int
+  - manaPool: ?            &lt;-- type unresolved in source
+  - counters: map
+  - zones: List
+  - deck: Deck
+  - timesCommandCast: Int
+
+Zone
+  - type: ZoneType
+  - id: UUID
+  - cards: List&lt;ref&gt;
+
+GameAction
+  - id: UUID
+  - actionSequenceNumber: Int
+  - playerID: UUID
+  - actionType: ActionType
+
+CardDefinition
+  - "found from scryfall API"   &lt;-- no fields enumerated
+
+CardLayout  (from prose, not diagrammed with fields)
+  - gameCardId, xPosition, yPosition, zIndex
+
+enum ZoneType   = LIBRARY, HAND, BATTLEFIELD, ... ("etc")
+enum ActionType = SIMPLE, COMPLEX
+enum CounterType = PLUS_ONE_PLUS_ONE, POISON, OIL, ... ("etc")</code></pre>
+  </div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Multiplicity</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Game 1 — 1..* Player</td><td>A game has one or more players</td></tr>
+      <tr><td>Game 1 — * GameAction</td><td>A game owns its full action history</td></tr>
+      <tr><td>GameCard 1 — 0..1 CardLayout</td><td>A card has at most one layout, and only while positioned</td></tr>
+      <tr><td>GameCard * — 1 CardDefinition</td><td>Many cards can share one definition</td></tr>
+      <tr><td>GameCard — 2 Player</td><td>A card references two players: owner and controller</td></tr>
+      <tr><td>Player 1 — * Zone</td><td>A player owns several zones</td></tr>
+      <tr><td>Player 1 — 1 Deck</td><td>A player has exactly one deck</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="resolved-model">2. Resolved model</h2>
+  <p>The additions and resolutions from the architecture brief, filling gaps G4 and G9.</p>
+
+  <div class="card">
+    <h3>randomSeed</h3>
+    <p><code>randomSeed: UInt64</code>. Games use <code>SeededGenerator: RandomNumberGenerator</code>. Every random choice in the engine — shuffles, AI randomness, anything — draws from this generator, which is what makes replay byte-identical. See Principle 4 in <a href="overview.html">overview.html</a>.</p>
+  </div>
+
+  <div class="card">
+    <h3>manaPool</h3>
+    <p><code>manaPool: ManaPool</code> = <code>[ManaSymbol: Int]</code> plus an ordered list of restricted mana objects. A plain dictionary of counts is not enough: mana with a "spend only on..." rider needs its own identity, not just a tally, so restricted mana is tracked as an ordered list of individually addressable objects alongside the count-based pool for unrestricted mana.</p>
+  </div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Why we store it</th></tr></thead>
+    <tbody>
+      <tr><td>scryfallId</td><td>UUID</td><td>Stable identity for cache lookups and dedup</td></tr>
+      <tr><td>oracleId</td><td>UUID</td><td>Identifies the same card across reprints and faces</td></tr>
+      <tr><td>name</td><td>String</td><td>Display</td></tr>
+      <tr><td>manaCost</td><td>String</td><td>Display and mana-payment legality (M3)</td></tr>
+      <tr><td>cmc</td><td>Double</td><td>Converted mana cost, used by rules calculations</td></tr>
+      <tr><td>typeLine</td><td>String</td><td>Display and type-based rules checks</td></tr>
+      <tr><td>oracleText</td><td>String</td><td>Card text display and rules reference</td></tr>
+      <tr><td>power / toughness / loyalty</td><td>String?</td><td>Base values; Scryfall represents these as strings (e.g. "*")</td></tr>
+      <tr><td>colors</td><td>[String]</td><td>Rules effects that key off color</td></tr>
+      <tr><td>colorIdentity</td><td>[String]</td><td>Commander color-identity legality</td></tr>
+      <tr><td>keywords</td><td>[String]</td><td>Ability detection</td></tr>
+      <tr><td>layout</td><td>String</td><td>Determines rendering and how cardFaces is interpreted</td></tr>
+      <tr><td>cardFaces</td><td>[CardFace]?</td><td>Double-faced and multi-face card support (must-have feature)</td></tr>
+      <tr><td>imageUris</td><td>[String: URL]?</td><td>Source for the local image cache; the app never hotlinks at render time</td></tr>
+      <tr><td>allParts</td><td>[RelatedPart]?</td><td><strong>Token and meld relations — this is what powers the deck-derived manual token picker.</strong> Without it the picker cannot be limited to tokens the selected deck can actually create.</td></tr>
+      <tr><td>legalities</td><td>[String: String]</td><td>Basis for future deck legality validation (G5, deferred)</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="card">
+    <h3>CounterStack</h3>
+    <p>Shared by cards and players: <code>type: CounterType</code>, <code>amount: Int</code>. Created on first add, removed at zero.</p>
+  </div>
+
+  <div class="card">
+    <h3>ZoneTransition</h3>
+    <p>Records every zone move. Retains exile tags after they are cleared from the exile UI, so transition history stays complete even once a tag is no longer shown.</p>
+  </div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Enum</th><th>Cases</th></tr></thead>
+    <tbody>
+      <tr><td>ZoneType</td><td>LIBRARY, HAND, BATTLEFIELD, GRAVEYARD, EXILE, STACK, COMMAND</td></tr>
+      <tr><td>ActionType</td><td>SIMPLE, COMPLEX</td></tr>
+      <tr><td>CounterType</td><td>Open set with named cases (e.g. PLUS_ONE_PLUS_ONE, POISON, OIL) plus a custom fallback</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="class-diagram">Class diagram</h2>
+  <p>Entities and multiplicities, matching section 1's source diagrams.</p>
+
+  <div class="mermaid-wrap"><pre class="mermaid">
+classDiagram
+    Game "1" --> "1..*" Player
+    Game "1" --> "*" GameAction
+    GameCard "1" --> "0..1" CardLayout
+    GameCard "*" --> "1" CardDefinition
+    GameCard "*" --> "1" Player : owner
+    GameCard "*" --> "1" Player : controller
+    Player "1" --> "*" Zone
+    Player "1" --> "1" Deck
+  </pre></div>
+
+  <div class="callout">
+    <span class="label">Boundary that matters</span>
+    <p><code>CardLayout</code> is UI-only. It is excluded from rules processing and from replay determinism. Moving a card within a zone is a layout operation, not a rules operation, and produces no <code>GameAction</code> — see Principle 5 in <a href="overview.html">overview.html</a>.</p>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Build models from section 2, not section 1 — section 1 is kept only as the historical record.</li>
+    <li>When adding a new <code>CardDefinition</code> field, check whether it changes rules behavior; if so it likely belongs in the Rules System, not just the model.</li>
+    <li>Read <a href="conventions.html">conventions.html</a> for the rule that every state mutation must go through a <code>GameAction</code> — this is what keeps <code>CardLayout</code> correctly excluded.</li>
+  </ol>
+</main>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark',
+    themeVariables: { background:'#1d2126', primaryColor:'#23282e', primaryTextColor:'#e8eaed',
+      primaryBorderColor:'#3a424b', lineColor:'#6cc394', fontSize:'14px' } });
+</script>
+<script src="../assets/nav.js"></script>
+</body>
+</html>

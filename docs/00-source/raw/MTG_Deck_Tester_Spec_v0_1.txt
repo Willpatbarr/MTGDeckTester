@@ -1,0 +1,255 @@
+
+MTG Deck Tester
+Product Specification v0.1
+Status: Draft / Living Document
+1. Vision
+MTG Deck Tester is a SwiftUI application that allows players to test Magic: The Gathering decks against one or more AI-controlled opponents.
+The primary goal is to provide a fast and repeatable environment for solo deck testing and deck development.
+Test deck consistency
+Test opening hands and mulligans
+Test mana curves
+Test matchups
+Test new card additions
+Practice gameplay lines
+2. Design Philosophy
+2.1 Deck-Centric
+Decks are uploaded once and can be used by either humans or bots. A deck has no assigned role. Roles are chosen when creating a game.
+Game 1
+Player: Yarok ETB
+Bot: Goblins
+
+Game 2
+Player: Goblins
+Bot: Yarok ETB
+2.2 Incremental Complexity
+The MVP should prioritize playability, speed, and deck testing usefulness over complete MTG rules accuracy.
+The application should avoid implementing a full MTG rules engine until later versions require it.
+3. Architecture
+3.1 Architecture Goal
+Keep the architecture intentionally simple until gameplay systems require additional separation.
+3.2 Current Architecture
+Views
+ ├─ Display UI
+ └─ Send user actions
+
+DeckStore
+ ├─ Save decks
+ └─ Load decks
+
+GameEngine
+ ├─ Own game state
+ ├─ Process actions
+ └─ Manage turns
+
+BotEngine
+ └─ Determine bot actions
+
+Models
+ ├─ Deck
+ ├─ Card
+ └─ Game
+3.3 Initial Folder Structure
+MTGDeckTester/
+├── Models/
+│   ├── Card.swift
+│   ├── Deck.swift
+│   └── Game.swift
+│
+├── Views/
+│   ├── DeckLibraryView.swift
+│   ├── DeckImportView.swift
+│   ├── GameSetupView.swift
+│   └── GameView.swift
+│
+├── Engine/
+│   ├── GameEngine.swift
+│   └── BotEngine.swift
+│
+└── Data/
+    └── DeckStore.swift
+4. Deck Management
+4.1 Deck Import
+Users can import decklists by pasting or uploading decklist text.
+Supported MVP input format:
+1 Sol Ring
+4 Llanowar Elves
+10 Forest
+Decks should be stored locally.
+4.2 Deck Library
+All imported decks appear in a single library. There is no distinction between player decks and bot decks.
+Deck name
+Card count
+5. Game Setup
+Users can configure the deck each participant will use for the game session.
+Player deck
+Bot deck 1
+Bot deck 2
+Bot deck N
+Starting life total
+Player: Yarok ETB
+Bot 1: Mono Green
+Bot 2: Goblins
+
+Life Total: 40
+6. MVP Gameplay Scope
+6.1 Supported
+Game Creation
+Load decks
+Shuffle libraries
+Draw opening hands
+Mulligan support
+Game State
+Each player maintains:
+Library
+Hand
+Battlefield
+Graveyard
+Exile
+Life total
+Human Player
+Human players can:
+Draw cards
+Play cards
+Move cards between zones
+Change life totals
+Tap cards
+Untap cards
+Create custom tokens
+Remove tokens
+Add counters to cards
+Remove counters from cards
+Add counters or markers to players
+Remove counters or markers from players
+End turn
+Bot Players
+Bots can:
+Draw cards
+Play lands
+Cast spells
+Attack
+End turn
+6.2 Not Included in MVP
+Full MTG rules engine
+Priority system
+Stack resolution
+Trigger handling
+Replacement effects
+Commander damage
+Online multiplayer
+Matchmaking
+Rules enforcement for every card
+7. Battlefield Interactions
+7.1 Card State
+Cards on the battlefield may have mutable state.
+Tapped / untapped
+Counters
+Custom markers if needed
+The system should support arbitrary counter types rather than hard-coding specific MTG counters.
+Counter Type: +1/+1
+Amount: 3
+
+Counter Type: Loyalty
+Amount: 5
+7.2 Custom Tokens
+For MVP, tokens are fully custom. Real / official token lookup may be added later.
+A token should support:
+Name
+Power
+Toughness
+Color
+Types
+Tapped state
+Counters
+Examples:
+Treasure
+Food
+Clue
+Blood
+Map
+Beast 3/3
+Zombie 2/2
+The system should not restrict token creation to existing card definitions.
+7.3 Player Counters / Markers
+Players may have counters or markers attached to them. The system should support custom marker types.
+Marker: Energy
+Value: 4
+
+Marker: Poison
+Value: 2
+8. Bot System
+8.1 Objective
+Bots should provide meaningful pressure and interaction for deck testing. Bots are not intended to simulate tournament-level play.
+8.2 Turn Flow
+Untap
+Draw
+Play land
+Cast spells
+Attack
+End turn
+8.3 Decision Making
+Bots use rule-based decision making rather than strategic planning.
+If land available
+    Play land
+
+If spell affordable
+    Cast spell
+
+If attack is favorable
+    Attack
+9. Simple Bot Mode
+9.1 MVP Rule
+Simple Bot Mode is always enabled for MVP.
+9.2 Purpose
+Simple Bot Mode allows bots to use any uploaded deck without requiring a full MTG rules engine.
+9.3 Card Simplification
+Bots may play any card. However, card behavior is simplified.
+Card Type
+Simple Bot Behavior
+Creature
+Becomes a vanilla creature. Uses power, toughness, and mana cost. Ignores abilities, keywords, and ETBs.
+Artifact
+Played if affordable. Ignored unless future versions add simple artifact rules.
+Enchantment
+Played if affordable. Ignored for MVP.
+Instant
+May be cast only during the bot turn in MVP. Simple value effects may be added later.
+Sorcery
+May be cast during the bot turn. Simple value effects may be added later.
+Planeswalker
+Played if affordable. Ignored or treated as a threat for MVP.
+Battle
+Ignored for MVP after being played, or skipped if unsupported.
+Land
+Played as the bot land for turn.
+Examples:
+Creature with ETB
+→ ETB ignored
+
+Creature with Flying
+→ Flying ignored
+
+Creature with Trample
+→ Trample ignored
+9.4 Future Expansion
+Future versions may allow multiple bot rules modes:
+Simple
+Assisted
+Full Rules
+MVP uses Simple only.
+10. Open Questions
+10.1 Gameplay Model
+Should the MVP allow players to manually resolve complicated effects, or attempt to automatically resolve some common card effects?
+Current recommendation: allow manual resolution for the human player while bots use Simple Bot Mode.
+10.2 Format Support
+Should the MVP officially support Commander, Modern, Standard, Legacy, and Custom, or simply treat all decks as generic MTG decks?
+Current recommendation: generic MTG decks for MVP.
+11. Next Spec Section To Define
+Game State & Data Model
+This should define:
+What a Card object contains
+What a Deck contains
+What a Player contains
+How zones work
+How game actions are represented
+How tokens, counters, tapped state, and player markers are stored
+

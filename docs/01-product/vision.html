@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#problem">Problem</a>
+    <a href="#users">Users</a>
+    <a href="#success">Success looks like</a>
+    <a href="#shape">Product shape</a>
+    <a href="#principle">Defining principle</a>
+    <a href="#three-things">Remember 3 things</a>
+    <a href="#gaps">Open gaps</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 01-product &rsaquo; Vision</div>
+    <h1>Vision</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> why MTG Deck Tester exists and what "done" is supposed to feel like. &nbsp;<strong>What to do with it:</strong> read this before any product or scope argument, and settle disagreements against it.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">MTG Deck Tester is a solo-built, offline-first SwiftUI iOS app that lets one person play full, rules-accurate Commander games against AI opponents to test their own decks — no accounts, no backend, no commercial ambitions today.</p>
+
+  <h2 id="problem">Problem</h2>
+  <p>Without this tool, testing a Commander deck means physically shuffling a paper deck, or squinting at a spreadsheet, or trusting gut feel about whether a build actually works. None of that tells you how a deck plays across repeated hands, against real pressure, or against the specific cards it's built to interact with.</p>
+  <p>The app exists to answer six recurring questions a deckbuilder actually has:</p>
+  <ul>
+    <li>Is this deck <strong>consistent</strong> — does it do its thing often enough across many games?</li>
+    <li>What do <strong>opening hands and mulligans</strong> actually look like with this build?</li>
+    <li>Is the <strong>mana curve</strong> and colour base actually workable in practice, not just on paper?</li>
+    <li>How does the deck fare in specific <strong>matchups</strong> against other strategies?</li>
+    <li>Does a <strong>new card</strong> I'm considering adding actually improve the deck?</li>
+    <li>Can I <strong>practise a specific line of play</strong> — a combo, a sequencing puzzle — reliably and repeatably?</li>
+  </ul>
+
+  <h2 id="users">Users</h2>
+  <p>Today there is exactly one user: the solo developer building the app. Friends may get access later via TestFlight (see <a href="../04-plan/milestones.html">M7</a>), which is a possibility worth building toward, not a committed plan.</p>
+  <div class="callout">
+    <span class="label">Be honest about this</span>
+    <p>"Customers" is a maybe that lives in the Someday tier of the feature list, not a roadmap item. There is no monetization, no accounts, and no server — see <a href="features.html">features.html</a>'s explicitly-out-of-scope list. Nothing in this project should be built as if a commercial user is coming.</p>
+  </div>
+
+  <h2 id="success">What success looks like</h2>
+  <p>Success is defined milestone by milestone, in the language of definitions-of-done from <a href="../04-plan/milestones.html">the milestone plan</a>. Two are the clearest markers:</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Milestone</th><th>What "success" means here</th></tr></thead>
+    <tbody>
+      <tr><td><strong>M2</strong> — Game State &amp; Manual Play Sandbox</td><td>A complete Commander game, playable entirely by hand from setup to a natural finish, with nothing enforced and nothing blocked. This is the first moment the app is genuinely usable for deck testing, even before any rules are automated.</td></tr>
+      <tr><td><strong>M1</strong> — Foundations, Card Data &amp; Decks</td><td>A pasted 100-card decklist resolves against Scryfall within 30 seconds, with images cached and available offline.</td></tr>
+      <tr><td><strong>M3</strong> — Rules Core</td><td>The engine independently enforces priority, stack, triggers, SBAs, layers, and mana — deck testing stops depending on the user remembering the rules.</td></tr>
+      <tr><td><strong>M4</strong> — Combat &amp; Copy Effects</td><td>Combat and copy effects resolve by official rules without manual adjudication.</td></tr>
+      <tr><td><strong>M5</strong> — AI Opponent</td><td>A bot plays a full turn against you through the real decision pipeline — matchup testing becomes possible without a second human.</td></tr>
+      <tr><td><strong>M6</strong> — History, Persistence &amp; Replay</td><td>Undo, redo, save, load, and deterministic replay all work — a bad line can be rewound and retried.</td></tr>
+      <tr><td><strong>M7</strong> — Ship to a Tester</td><td>A friend installs the app via TestFlight, imports their own deck, plays a game against a bot, and a crash they hit reaches the developer with a usable stack trace. This is the first time the app exists for someone other than its author.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="shape">Product shape</h2>
+  <ul>
+    <li><strong>Platform:</strong> iOS, iPhone-first UI, universal architecture, built in SwiftUI.</li>
+    <li><strong>Format:</strong> Commander only for now — 40 life, commander rules on, 100-card singleton assumed even though legality isn't checked yet.</li>
+    <li><strong>Data:</strong> offline-first. Card data ships from a Scryfall bulk download and is cached locally; the app works with no network connection after first launch.</li>
+    <li><strong>Accounts:</strong> none. No sign-in, no server-side state, no sync.</li>
+    <li><strong>Backend:</strong> none. This is a local, on-device app — see the services rejection list in <a href="../03-services/index.html">03-services</a>.</li>
+  </ul>
+
+  <h2 id="principle">The defining product principle</h2>
+  <div class="callout good">
+    <span class="label">Strict engine, permissive UI</span>
+    <p>The <strong>engine</strong> is rules-accurate: it follows official MTG priority, state-based actions, replacement effects, and the full continuous-effects layer system. The <strong>UI</strong> is a testing tool, not a rules referee — it shows you every hand, every library, every zone destination, and blocks nothing, legal or illegal.</p>
+    <p>Visibility and legality are still tracked in the model for a future rules-aware mode, but MVP deliberately favours testing clarity over hidden-information secrecy. Do not "fix" this later by mistake — it is a decision, not an oversight.</p>
+  </div>
+
+  <h2 id="three-things">Remember only 3 things</h2>
+  <div class="three">
+    <div class="item"><div><strong>It's a testing sandbox, not a game client.</strong> The point is to answer "does my deck work," not to hide information from a solo player or gate them behind rules enforcement in the UI.</div></div>
+    <div class="item"><div><strong>The engine is real, the audience isn't yet.</strong> A full, rules-accurate MTG engine is being built for an audience of one, with friends as a maybe. Scope the engine seriously; scope the audience honestly.</div></div>
+    <div class="item"><div><strong>M2 before rules.</strong> A fully playable-by-hand sandbox ships before any rules subsystem is written, so the project is never more than one milestone away from being useful.</div></div>
+  </div>
+
+  <h2 id="gaps">Open gaps (product-level unknowns)</h2>
+  <p>These are things the source notes never decided. Full detail and handling in <a href="decisions.html">decisions.html</a>; listed here because gaps at this level shape the product itself.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>Gap</th><th>Why it matters</th><th>Handling</th></tr></thead>
+    <tbody>
+      <tr><td>G1</td><td>Local persistence technology never named</td><td>Blocks M1 — SwiftData vs. Core Data vs. plain Codable JSON are meaningfully different builds</td><td><span class="tag proposed">[PROPOSED]</span> SwiftData for decks + card cache, Codable JSON for game saves/replays</td></tr>
+      <tr><td>G2</td><td>Scryfall access pattern undecided — per-card calls vs. bulk file</td><td>Import speed for a 100-card deck, and whether the app works offline</td><td><span class="tag decided">[DECIDED]</span> bulk file on first launch, per-card only on cache miss</td></tr>
+      <tr><td>G3</td><td>No testing strategy in any source</td><td>A rules engine this deep is untestable by hand</td><td><span class="tag decided">[DECIDED]</span> Swift Testing on the engine only, deterministic seeds</td></tr>
+      <tr><td>G4</td><td><code>randomSeed</code> and <code>manaPool</code> types unresolved in the CRD</td><td>Determinism — the whole replay feature — depends on the seed type</td><td><span class="tag decided">[DECIDED]</span> <code>UInt64</code> seed, <code>[ManaSymbol: Int]</code> mana pool plus restricted-mana list</td></tr>
+      <tr><td>G5</td><td>Deck legality validation never mentioned</td><td>Commander is enabled but nothing checks a deck is legal</td><td><span class="tag deferred">[DEFERRED]</span> trigger: first confusing test result from an illegal deck</td></tr>
+      <tr><td>G6</td><td>Unresolved-card handling is one sentence, no UI specified</td><td>Every real decklist has a few names Scryfall won't match first try</td><td><span class="tag decided">[DECIDED]</span> dedicated "needs attention" row with retry + manual search</td></tr>
+      <tr><td>G7</td><td>No app distribution plan</td><td>Can't hand this to a friend without one</td><td><span class="tag decided">[DECIDED]</span> TestFlight, gated behind Apple Developer Program</td></tr>
+      <tr><td>G8</td><td>Accessibility and localization absent from every source</td><td>—</td><td><span class="tag deferred">[DEFERRED]</span> trigger: a real user who needs it</td></tr>
+      <tr><td>G9</td><td><code>CardDefinition</code> has no enumerated fields</td><td>It's the most-used model in the app</td><td><span class="tag decided">[DECIDED]</span> field list in <a href="../02-architecture/data-model.html">data-model.html</a>, Scryfall subset</td></tr>
+      <tr><td>G10</td><td>No error/crash reporting decision</td><td>—</td><td><span class="tag decided">[DECIDED]</span> Sentry at T1</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Read <a href="features.html">features.html</a> for the concrete Must-have / Should-have / Someday breakdown behind this vision.</li>
+    <li>Read <a href="decisions.html">decisions.html</a> and weigh in on the <span class="tag proposed">[PROPOSED]</span> list — that's where the genuine coin-flips live.</li>
+    <li>Track progress against the milestone table in <a href="../04-plan/milestones.html">04-plan/milestones.html</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature Inventory — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#must-have">Must-have</a>
+    <a href="#should-have">Should-have</a>
+    <a href="#someday">Someday</a>
+    <a href="#out-of-scope">Out of scope</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 01-product &rsaquo; Feature Inventory</div>
+    <h1>Feature Inventory</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> every feature the app is committed to, grouped by when it ships. &nbsp;<strong>What to do with it:</strong> use it as the scope reference for any "should we build X" question.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">MVP is a large, rules-accurate Commander sandbox with roughly 38 must-have features spanning decks, battlefield, full rules engine, AI, and history — everything else is explicitly Should-have, Someday, or out of scope.</p>
+
+  <h2 id="must-have">Must-have — MVP <span class="prio must">must</span></h2>
+  <p>Every row below is tagged and sourced. Almost all are <span class="tag locked">[LOCKED]</span> — they came directly from the reconciled specs, not from planning judgment. Groups roughly follow milestone delivery order; see <a href="../04-plan/milestones.html">milestones.html</a> for exact scope per milestone.</p>
+
+  <h3>Decks &amp; card data — delivered by <a href="../04-plan/milestones.html">M1</a></h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Feature</th><th>Detail</th><th>Tag</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Decklist import</td><td>Paste or upload <code>4 Llanowar Elves</code> text format; async resolution against Scryfall; unresolved cards retained and retryable</td><td><span class="tag locked">[LOCKED]</span></td><td>S1 §4.1, S2 §1</td></tr>
+      <tr><td>Deck library</td><td>Single library, role-agnostic decks, name + card count</td><td><span class="tag locked">[LOCKED]</span></td><td>S1 §4.2, S2 §1</td></tr>
+      <tr><td>Text-only card fallback</td><td>Rendered when no image is available</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §1</td></tr>
+      <tr><td>Double-faced / multi-face cards</td><td>Supported</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §1</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Setup, zones &amp; manual play sandbox — delivered by <a href="../04-plan/milestones.html">M2</a></h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Feature</th><th>Detail</th><th>Tag</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Game setup</td><td>Choose deck per seat, N bot opponents, starting life (default 40)</td><td><span class="tag locked">[LOCKED]</span></td><td>S1 §5, S2 §1</td></tr>
+      <tr><td>Commander format defaults</td><td>40 life, 7 starting/max hand, commander rules on, command zone + commander tax</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §1</td></tr>
+      <tr><td>Mulligans</td><td>London mulligan</td><td><span class="tag conflict">[CONFLICT]</span> C11</td><td>S1 §6.1</td></tr>
+      <tr><td>Zones</td><td>Shared: Battlefield, Exile, Stack, Command. Player-owned: Library, Hand, Graveyard. All ordered, stable zoneIds</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §2</td></tr>
+      <tr><td>Freeform human battlefield</td><td>Drag-and-drop, fixed card size, fixed no-scroll play area, cards may overlap, single-select only</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>Opponent battlefield panels</td><td>Compact, auto-organized, collapsible</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>Tap/untap</td><td>Tap toggles; tapped renders at 90°; no arbitrary rotation</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>CardLayout + spawn/z-order</td><td>Spawn top-left then offset; newest gets highest zIndex; drag raises to top; layout destroyed on zone exit; layout is UI-only and excluded from replay determinism</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>Attachments rendering</td><td>Attached cards fan vertically beneath host, bottom half visible, move as one unit; legality owned by engine</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>Counters &amp; damage badges</td><td>Per-type badges beneath card (<code>+1/+1 &times;2</code>), shown only when non-zero; damage beside them</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>Card status display</td><td>Quantity indicator above; aggregate temp P/T modification centre; counters lower-left; current P/T lower-right with delta-from-base indicator</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>Enlarged card view</td><td>Long-press modal; persists across zone changes; close/tap-out/swipe-down; allows counter edit + move zone; forbids tap, drag, attach</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §4</td></tr>
+      <tr><td>Move Zone action</td><td>All destinations offered, no legality validation; ownership rules per destination; library placement top/bottom/specific/random with clamping</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §4</td></tr>
+      <tr><td>Ordered Zone Viewer</td><td>One shared viewer configured per zone; reused for library, hand, graveyard, exile, stack, token picker</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §4</td></tr>
+      <tr><td>Shared search</td><td>Text-only; preserves natural zone order (filters, never re-sorts); opens empty; no auto-focus; cleared on close</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §4</td></tr>
+      <tr><td>Exile tags</td><td>Auto-assigned from exile source; chronological default with optional grouping; removed on leaving exile but kept in transition history</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §4</td></tr>
+      <tr><td>Tokens</td><td>GameCards with <code>isToken = true</code>; identical UI model to permanents; removed by normal gameplay (no delete action); no provenance recorded</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §6</td></tr>
+      <tr><td>Token grouping</td><td>Long-press &rarr; selection mode &rarr; Auto Group when state is identical; purely visual stack with quantity badge; dragging the top token leaves the stack; never automatic</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §6</td></tr>
+      <tr><td>Manual token picker</td><td>Scrollable ungrouped list rendered with the shared viewer; limited to tokens the deck can create; choose quantity and controller; default entry state; shared creation pipeline with automatic creation</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §6</td></tr>
+      <tr><td>Face-down cards</td><td>Single generic card back; engine still tracks morph/manifest/cloak underneath</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+      <tr><td>Turn structure</td><td>Manual advancement default, one phase/step at a time; Automatic mode advances when no input needed</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Active turn indicator</td><td>Subtle glow/outline on the active player's battlefield, supplementing the turn tracker</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §5</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Rules engine — delivered by <a href="../04-plan/milestones.html">M3</a> and <a href="../04-plan/milestones.html">M4</a></h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Feature</th><th>Detail</th><th>Tag</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Decision pipeline</td><td>Engine issues <code>DecisionRequest</code> (responsible player, source, choices, constraints); humans and AI both answer via <code>DecisionResponse</code>; used for sacrifice, discard, search, modal, colour, creature type</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §2</td></tr>
+      <tr><td>Priority &amp; triggers</td><td>Official priority rules; automatic trigger detection; mandatory triggers auto-stacked; optional "may" triggers prompt; simultaneous same-controller triggers ordered by that player</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>State-based actions</td><td>Official SBAs, checked repeatedly to fixpoint before any priority; triggers from SBAs stacked only after SBAs finish; not surfaced as user-visible steps</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Replacement &amp; prevention</td><td>Evaluated before a GameAction commits; official ordering when multiple apply; history records both attempted and final event; replay executes final, preserves attempted</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Continuous effects / layers</td><td>Full official layer system from day one; each effect is its own engine object; derived characteristics recomputed from base; official dependency + timestamp rules</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Mana system</td><td>Mana as explicit pool objects; engine computes all legal payments, UI shows only valid choices; mana abilities bypass the stack; auto-pay with manual fallback on meaningful choice; persistent floating-mana UI</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Targeting</td><td>Targets picked directly from battlefield; players targetable; restrictions enforced; multi-choice prompts consolidated into one UI where possible</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Combat</td><td>Official sequence; engine enforces all attack/block legality (summoning sickness, flying, menace, vigilance&hellip;); auto damage assignment, prompts only where rules require (blocker order, trample); attackers/blockers are explicit engine state</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Copy effects</td><td>Official copy rules; copies are engine objects; copied spells become independent stack objects; prompt for new targets; copyable choices stored explicitly</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3</td></tr>
+      <tr><td>Stack</td><td>Uses shared viewer; drag to reorder; APNAP auto-placement; resolves automatically until interaction needed</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §4</td></tr>
+      <tr><td>Developer Mode</td><td>Bypass targeting restrictions; disable SBAs; disable replacement/prevention; expose full layer-evaluation breakdown; expose full combat state; inspect any historical state during replay</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §3, §7</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>AI, history &amp; persistence — delivered by <a href="../04-plan/milestones.html">M5</a> and <a href="../04-plan/milestones.html">M6</a></h3>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Feature</th><th>Detail</th><th>Tag</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>AI opponent</td><td>Same DecisionRequest pipeline as humans; never mutates state; strategy-based difficulty; deterministic RNG; perfect information in MVP; pipeline = Knowledge View &rarr; Action Generator &rarr; Action Evaluator &rarr; Decision Selector</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §7, S5&ndash;S8</td></tr>
+      <tr><td>Undo / redo</td><td>Multi-step undo walking back the GameAction history; redo available until a new action is performed</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §7</td></tr>
+      <tr><td>Save / load</td><td>Serialize at any point</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §7</td></tr>
+      <tr><td>Replay</td><td>Driven from GameAction history; deterministic; play, pause, step forward, step backward</td><td><span class="tag locked">[LOCKED]</span></td><td>S2 §7</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="should-have">Should-have — after MVP <span class="prio important">important</span></h2>
+  <ul>
+    <li>Deck editor</li>
+    <li>Deck legality validation (gap G5)</li>
+    <li>Commander damage (conflict C12)</li>
+    <li>Advanced search filters (colour, MV, type)</li>
+    <li>Battlefield annotations (arrows, highlights)</li>
+    <li>"Clean Up Board" auto-organize</li>
+    <li>Animated battlefield entry</li>
+    <li>Distinct face-down visual treatments</li>
+    <li>Battlefield search</li>
+    <li>Pinch-zoom on the play area (conflict C13 trigger)</li>
+    <li>Rules-aware zone-move validation</li>
+    <li>Rules-aware library search filtering</li>
+    <li>Position locking</li>
+  </ul>
+
+  <h2 id="someday">Someday <span class="prio optional">optional</span></h2>
+  <ul>
+    <li>Multiple bot rules modes (Simple / Assisted / Full &mdash; the S1 §9.4 idea, now inverted since Full is the baseline)</li>
+    <li>Online multiplayer</li>
+    <li>Matchmaking</li>
+    <li>Non-Commander formats</li>
+    <li>macOS/iPad-optimized layouts</li>
+    <li>Accessibility pass</li>
+    <li>Localization</li>
+    <li>AI difficulty beyond one strategy</li>
+    <li>Imperfect-information AI</li>
+    <li>Deck statistics and goldfish analytics</li>
+  </ul>
+
+  <h3>Explicitly out of scope, forever-until-stated</h3>
+  <ul id="out-of-scope">
+    <li>Full-rules coverage of every printed card (the engine is rules-accurate for what it implements; card coverage grows over time)</li>
+    <li>Anything server-side</li>
+    <li>Accounts</li>
+    <li>Monetization</li>
+  </ul>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Cross-check any new feature idea against the Should-have and Someday lists before adding it to a milestone.</li>
+    <li>See <a href="decisions.html">decisions.html</a> for why the <span class="tag conflict">[CONFLICT]</span> rows (mulligans, C11) resolved the way they did.</li>
+    <li>See <a href="../04-plan/milestones.html">milestones.html</a> for the per-milestone definition-of-done that turns this list into working software.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>

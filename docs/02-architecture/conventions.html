@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conventions — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#folder-layout">Folder layout</a>
+    <a href="#banned-names">Banned names</a>
+    <a href="#engine-rules">Engine rules</a>
+    <a href="#testing">Testing convention</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 02-architecture &rsaquo; Conventions</div>
+    <h1>Conventions</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the folder layout, naming rules, and hard engine constraints that keep the codebase consistent. &nbsp;<strong>What to do with it:</strong> follow it every time you add a file or write engine code; the banned names exist because both mistakes already happened once in the source diagrams.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Two names are banned, every state mutation is a GameAction, and randomness only ever comes from the game's seeded generator.</p>
+
+  <h2 id="folder-layout">Folder layout</h2>
+  <div class="tablewrap">
+  <pre><code>Models/
+Views/
+ViewModels/
+Engines/
+  GameEngine/
+  AIEngine/
+Database/
+CardAPI/</code></pre>
+  </div>
+
+  <h2 id="banned-names">Banned names</h2>
+  <p>Both rows exist because the source diagrams disagreed with themselves — see contradictions C5 and C7 in <a href="../00-source/contradictions.html">../00-source/contradictions.html</a>.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Banned</th><th>Use instead</th><th>Why</th><th>Tag</th></tr></thead>
+    <tbody>
+      <tr><td><code>BotEngine</code></td><td><code>AIEngine</code></td><td>Prose called it BotEngine, diagrams called it AIEngine. Diagrams won for consistency (C7).</td><td><span class="tag decided">[DECIDED]</span></td></tr>
+      <tr><td>Top-level <code>RulesEngine</code> type</td><td><code>Engines/GameEngine/RulesSystem/</code></td><td>A later diagram added RulesEngine as a peer of GameEngine, but it was never decomposed or supported by prose. Rules knowledge is a subsystem queried synchronously inside GameEngine, not a separate engine boundary (C5).</td><td><span class="tag decided">[DECIDED]</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="engine-rules">Engine rules</h2>
+
+  <div class="card">
+    <h3>Every state mutation goes through a GameAction</h3>
+    <p>If it doesn't change game state, it isn't a <code>GameAction</code>. This is what keeps the action history complete and makes undo, redo, save, load, and replay all work off the same list.</p>
+  </div>
+
+  <div class="card">
+    <h3>Every GameAction is reversible, or explicitly marked irreversible</h3>
+    <p>Reversibility is designed in from the start of the model, per contradiction C9, even though the undo feature itself ships later.</p>
+  </div>
+
+  <div class="card">
+    <h3>No Bool flags on the engine for UI concerns</h3>
+    <p>UI state belongs in ViewModels, not on engine types. If a flag exists only to change how something renders, it does not belong on the engine.</p>
+  </div>
+
+  <div class="card">
+    <h3>Randomness only via the game's seeded generator</h3>
+    <p><code>Int.random(in:)</code> is banned in engine code. Every random choice must draw from the game's <code>SeededGenerator</code> so that replay stays byte-identical — see Principle 4 in <a href="overview.html">overview.html</a>.</p>
+  </div>
+
+  <h2 id="testing">Testing convention</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td>Framework</td><td>Swift Testing</td></tr>
+      <tr><td>Scope</td><td>Engine only</td></tr>
+      <tr><td>Seeds</td><td>Deterministic seeds in every test</td></tr>
+      <tr><td>UI</td><td>Untested until a teammate exists</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>Set up the folder layout above when the Xcode project is created.</li>
+    <li>Grep for <code>BotEngine</code> and top-level <code>RulesEngine</code> before merging anything — neither should ever appear.</li>
+    <li>When writing an engine test, seed the generator explicitly rather than relying on a default.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>
