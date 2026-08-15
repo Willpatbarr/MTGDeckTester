@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raw Sources — MTG Deck Tester</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+
+<nav class="skipto" aria-label="Skip to section">
+  <button class="skipto-toggle" aria-label="Skip to section menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="skipto-menu">
+    <div class="navlabel">Skip to</div>
+    <a href="#one-sentence">One sentence</a>
+    <a href="#inventory">Source inventory</a>
+    <a href="#diagrams">Content extracted from diagrams</a>
+    <a href="#next">What to do next</a>
+  </div>
+</nav>
+
+<main>
+  <div class="pagehead">
+    <div class="breadcrumb"><a href="../index.html">Project hub</a> &rsaquo; 00-source &rsaquo; Raw Sources</div>
+    <h1>Raw Sources</h1>
+  </div>
+
+  <p class="whatthisis"><strong>What this is:</strong> the catalog of every planning document that fed this project, unedited, plus a verbatim transcription of the diagram content that exists nowhere else. <strong>What to do with it:</strong> use it to check any claim elsewhere in <code>docs/</code> against its original source; do not edit the files it points at.</p>
+
+  <h2 id="one-sentence">One-sentence version</h2>
+  <p class="onesentence">Ten source items — two spec drafts, one empty document, one generated map, and four draw.io diagram files — were read in full and preserved unedited in <code>raw/</code>; this page is the index, and <a href="contradictions.html">contradictions.html</a> is where their disagreements get resolved.</p>
+
+  <div class="callout">
+    <span class="label">Preservation rule</span>
+    <p>Every file listed below is preserved <strong>unedited</strong> in <code>raw/</code> and must never be rewritten, reformatted, or "cleaned up." Organized, reconciled copies of their content live in <a href="../01-product/features.html">01-product</a>, <a href="../02-architecture/overview.html">02-architecture</a>, <a href="../03-services/index.html">03-services</a>, and <a href="../04-plan/milestones.html">04-plan</a>. If a raw file and an organized doc disagree, the organized doc's reasoning should trace back to a resolution recorded on <a href="contradictions.html">contradictions.html</a>.</p>
+  </div>
+
+  <h2 id="inventory">Source inventory</h2>
+  <p>All non-excluded content across both source folders was read in full — roughly 500 KB total. Excluded by standing rule: <code>.git/</code>, <code>.DS_Store</code>; no <code>node_modules</code>, <code>build/</code>, or <code>DerivedData/</code> directories existed in either folder.</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead>
+      <tr><th>#</th><th>File</th><th>Location</th><th>Size</th><th>Kind</th><th>Covers</th><th>Relative age</th><th>Preserved at</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>S1</td>
+        <td><code>MTG_Deck_Tester_Spec_v0_1.docx</code></td>
+        <td>Ideas/Spec</td>
+        <td>40 KB</td>
+        <td>Prose spec</td>
+        <td>Vision, simple architecture, deck import, MVP gameplay scope, Simple Bot Mode</td>
+        <td><strong>Oldest</strong></td>
+        <td><a href="raw/MTG_Deck_Tester_Spec_v0_1.docx">raw/MTG_Deck_Tester_Spec_v0_1.docx</a></td>
+      </tr>
+      <tr>
+        <td>S2</td>
+        <td><code>MTG_Deck_Tester_Spec_v1_0.docx</code></td>
+        <td>Ideas/Spec</td>
+        <td>340 KB</td>
+        <td>Prose spec, reorganized by topic</td>
+        <td>Full rules engine, data model, battlefield UI, zones/search, tokens, history/AI</td>
+        <td><strong>Newest prose</strong></td>
+        <td><a href="raw/MTG_Deck_Tester_Spec_v1_0.docx">raw/MTG_Deck_Tester_Spec_v1_0.docx</a></td>
+      </tr>
+      <tr>
+        <td>S3</td>
+        <td><code>Untitled document.docx</code></td>
+        <td>Ideas/Spec</td>
+        <td>8 KB</td>
+        <td><strong>Empty</strong> (0 chars of text)</td>
+        <td>nothing</td>
+        <td>n/a</td>
+        <td><a href="raw/Untitled document.docx">raw/Untitled document.docx</a></td>
+      </tr>
+      <tr>
+        <td>S4</td>
+        <td><code>mtg-deck-tester-map.html</code></td>
+        <td>Ideas root</td>
+        <td>56 KB</td>
+        <td>Generated archmap, dated 2026-07-21, self-describes "from Product Spec v1.0"</td>
+        <td>8 linked component diagrams derived from S2</td>
+        <td>Derived from S2</td>
+        <td><a href="raw/mtg-deck-tester-map.html">raw/mtg-deck-tester-map.html</a></td>
+      </tr>
+      <tr>
+        <td>S5</td>
+        <td><code>0.1-0.1.2.2.drawio</code></td>
+        <td>Repo</td>
+        <td>34 KB</td>
+        <td>draw.io, 4 pages</td>
+        <td><code>0.1 - CD</code>, <code>0.1.2 - EnginesCD</code>, <code>0.1.2.1 - GameEngineCD</code>, <code>0.1.2.2 - AIEngineCD</code></td>
+        <td>Earlier diagram set</td>
+        <td><a href="raw/0.1-0.1.2.2.drawio">raw/0.1-0.1.2.2.drawio</a></td>
+      </tr>
+      <tr>
+        <td>S6</td>
+        <td><code>.$0.1-0.1.3.drawio.bkp</code></td>
+        <td>Repo</td>
+        <td>34 KB</td>
+        <td>draw.io autosave backup, same 4 pages, adds <code>RulesEngine</code> box to <code>0.1 - CD</code></td>
+        <td>same</td>
+        <td>Later than S5</td>
+        <td><a href="raw/0.1-0.1.3.drawio.bkp">raw/0.1-0.1.3.drawio.bkp</a></td>
+      </tr>
+      <tr>
+        <td>S7</td>
+        <td><code>MTGCRD.drawio</code></td>
+        <td>Repo</td>
+        <td>19 KB</td>
+        <td>draw.io, 1 page <code>OverallCRD</code></td>
+        <td>Skeleton CRD: Game, GameAction, CardLayout, GameCard, Player, CardDefinition, Zone + multiplicities</td>
+        <td>Skeleton</td>
+        <td><a href="raw/MTGCRD.drawio">raw/MTGCRD.drawio</a></td>
+      </tr>
+      <tr>
+        <td>S8</td>
+        <td><code>MTGDiagrams.drawio</code></td>
+        <td>Repo</td>
+        <td>99 KB</td>
+        <td>draw.io, 8 pages</td>
+        <td><code>0.1 - CD</code> (with RulesEngine), <code>0.2 - CRD</code>, and per-entity CRDs <code>0.2.1</code>&ndash;<code>0.2.6</code></td>
+        <td><strong>Newest diagram set</strong></td>
+        <td><a href="raw/MTGDiagrams.drawio">raw/MTGDiagrams.drawio</a></td>
+      </tr>
+      <tr>
+        <td>&mdash;</td>
+        <td><code>UI/</code> folder</td>
+        <td>Ideas root</td>
+        <td>0 B</td>
+        <td><strong>Empty directory</strong></td>
+        <td>nothing</td>
+        <td>n/a</td>
+        <td>not preserved &mdash; empty, nothing to copy</td>
+      </tr>
+      <tr>
+        <td>&mdash;</td>
+        <td>Excluded files</td>
+        <td>both folders</td>
+        <td>&mdash;</td>
+        <td><code>.git/</code>, <code>.DS_Store</code></td>
+        <td>nothing</td>
+        <td>n/a</td>
+        <td>not preserved &mdash; excluded by standing rule</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>The two <code>.txt</code> files are extracted plain-text versions of S1 and S2's <code>.docx</code> content, kept alongside them for easy grepping without opening Word: <a href="raw/MTG_Deck_Tester_Spec_v0_1.txt">raw/MTG_Deck_Tester_Spec_v0_1.txt</a> (from S1) and <a href="raw/MTG_Deck_Tester_Spec_v1_0.txt">raw/MTG_Deck_Tester_Spec_v1_0.txt</a> (from S2).</p>
+
+  <h2 id="diagrams">Content extracted from diagrams</h2>
+  <p>The four draw.io files (S5&ndash;S8) are binary-ish XML and don't render as readable text anywhere else in <code>docs/</code>. This section transcribes their content verbatim so it's searchable and quotable. It is the <strong>only</strong> place this transcription happens &mdash; the resolved, reconciled architecture built from it lives on <a href="../02-architecture/overview.html">02-architecture/overview.html</a> and <a href="../02-architecture/data-model.html">02-architecture/data-model.html</a>.</p>
+
+  <div class="card">
+    <h3>Top-level component decomposition (<code>0.1 - CD</code>)</h3>
+    <p><code>App</code> &rarr; <code>Views</code>, <code>ViewModels</code>, <code>Models</code>, <code>Engines</code>, <code>Database</code>, <code>CardAPI</code>.</p>
+    <p><code>Engines</code> contains <code>GameEngine</code>, <code>AIEngine</code> (and, in S6/S8 only, a sibling <code>RulesEngine</code>).</p>
+    <p><code>Database</code> contains <code>Database API</code>, <code>Storage</code>.</p>
+  </div>
+
+  <div class="card">
+    <h3><code>0.1.2 - EnginesCD</code> &mdash; engine interaction contract</h3>
+    <ul>
+      <li>App &rarr; GameEngine: <em>Human actions</em></li>
+      <li>GameEngine &rarr; AIEngine: <em>Decision request, permitted game state</em></li>
+      <li>AIEngine &rarr; GameEngine: <em>chosen action or response</em></li>
+      <li>GameEngine &rarr; App: <em>State + decision requests</em></li>
+      <li>GameEngine &harr; Database: <em>Card data + save/load</em></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3><code>0.1.2.1 - GameEngineCD</code> &mdash; GameEngine internals (6 subsystems)</h3>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Subsystem</th><th>Stated responsibility</th></tr></thead>
+      <tbody>
+        <tr><td>Engine Interface</td><td>Entry and exit point for engine</td></tr>
+        <tr><td>Game Flow Coordinator</td><td>Controls what happens next</td></tr>
+        <tr><td>Action Processor</td><td>Validates and processes intents</td></tr>
+        <tr><td>Rules System</td><td>Provides rules knowledge</td></tr>
+        <tr><td>History System</td><td>Stores history of actions</td></tr>
+        <tr><td>Game State Store</td><td>Owns state of the game</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><code>0.1.2.2 - AIEngineCD</code> &mdash; AIEngine internals (5 subsystems, pipeline)</h3>
+    <p><code>AI Interface</code> (entry/exit) &rarr; <code>Game Knowledge View</code> (builds context; receives <em>permitted game information</em>) &rarr; <code>Action Generator</code> (generates legal candidate actions) &rarr; <code>Action Evaluator</code> (scores how useful each action is) &rarr; <code>Decision Selector</code> (chooses from scored candidates) &rarr; returns <em>Selected Response</em>.</p>
+  </div>
+
+  <div class="card">
+    <h3><code>0.2.x</code> CRDs &mdash; field-level data model</h3>
+    <p>The only field-level source that exists. Reproduced verbatim, including its two unresolved types.</p>
+    <pre><code>Game
+  - gameId: UUID
+  - randomSeed: ?          &lt;-- type unresolved in source
+  - timestamps: Time
+  - players: UUID
+  - turnNumber: Int
+  - currentTurn: Turn
+  - actionHistory
+  + Game(players: List)
+  + passTurn(): Turn
+
+GameCard
+  - cardDefinitionID: UUID
+  - id: UUID
+  - owner: UUID
+  - controller: UUID
+  - currentZone: ref
+  - isVisible: Bool
+  - isToken: Bool
+  - basePowerToughness: PowerToughness
+  - ptModifiers: [String: PowerToughness]
+  - ptCurrent: PowerToughness
+  - isTapped: Bool
+  - isSummoningSick: Bool
+  - attachments: List
+  - counters: map
+  - transitionHistory: List
+
+Player
+  - id: UUID
+  - isUser: Bool
+  - userID?: UUID
+  - startingLife: Int
+  - currentLife: Int
+  - manaPool: ?            &lt;-- type unresolved in source
+  - counters: map
+  - zones: List
+  - deck: Deck
+  - timesCommandCast: Int
+
+Zone
+  - type: ZoneType
+  - id: UUID
+  - cards: List&lt;ref&gt;
+
+GameAction
+  - id: UUID
+  - actionSequenceNumber: Int
+  - playerID: UUID
+  - actionType: ActionType
+
+CardDefinition
+  - "found from scryfall API"   &lt;-- no fields enumerated
+
+CardLayout  (from S2 prose, not diagrammed with fields)
+  - gameCardId, xPosition, yPosition, zIndex
+
+enum ZoneType   = LIBRARY, HAND, BATTLEFIELD, &hellip; ("etc")
+enum ActionType = SIMPLE, COMPLEX
+enum CounterType = PLUS_ONE_PLUS_ONE, POISON, OIL, &hellip; ("etc")</code></pre>
+  </div>
+
+  <div class="card">
+    <h3>Multiplicities</h3>
+    <p>From <code>0.2 - CRD</code> / <code>MTGCRD.drawio</code>:</p>
+    <ul>
+      <li>Game 1&mdash;1..* Player</li>
+      <li>Game 1&mdash;* GameAction</li>
+      <li>GameCard 1&mdash;0..1 CardLayout</li>
+      <li>GameCard *&mdash;1 CardDefinition</li>
+      <li>GameCard &mdash;2 Player (owner + controller)</li>
+      <li>Player 1&mdash;* Zone</li>
+      <li>Player 1&mdash;1 Deck</li>
+    </ul>
+  </div>
+
+  <p>Where these diagrams disagree with each other or with the prose specs (S1/S2), see <a href="contradictions.html">contradictions.html</a> &mdash; most notably C5 (where rules knowledge lives) and C6 (application layering), both resolved there in favor of the diagrams.</p>
+
+  <h2 id="next">What to do next</h2>
+  <ol>
+    <li>If you're checking a fact, open the linked file in <code>raw/</code> directly &mdash; this page and its diagram transcription are a convenience, not a replacement.</li>
+    <li>If two sources disagree, check <a href="contradictions.html">contradictions.html</a> before assuming either one is authoritative.</li>
+    <li>For the reconciled architecture built from the diagram content above, go to <a href="../02-architecture/overview.html">02-architecture/overview.html</a> and <a href="../02-architecture/data-model.html">02-architecture/data-model.html</a>.</li>
+    <li>For how these sources map onto shipped features, see <a href="../01-product/features.html">01-product/features.html</a> and <a href="../04-plan/milestones.html">04-plan/milestones.html</a>.</li>
+  </ol>
+</main>
+
+<script src="../assets/nav.js"></script>
+</body>
+</html>
