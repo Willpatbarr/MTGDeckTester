@@ -25,18 +25,18 @@
     <h1>Raw Sources</h1>
   </div>
 
-  <p class="whatthisis"><strong>What this is:</strong> the catalog of every planning document that fed this project, unedited, plus a verbatim transcription of the diagram content that exists nowhere else. <strong>What to do with it:</strong> use it to check any claim elsewhere in <code>docs/</code> against its original source; do not edit the files it points at.</p>
+  <p class="whatthisis">Catalog of the original planning documents and a searchable transcription of the diagrams. Files under <code>raw/</code> are preserved unchanged.</p>
 
   <h2 id="one-sentence">One-sentence version</h2>
-  <p class="onesentence">Ten source items — two spec drafts, one empty document, one generated map, and four draw.io diagram files — were read in full and preserved unedited in <code>raw/</code>; this page is the index, and <a href="contradictions.html">contradictions.html</a> is where their disagreements get resolved.</p>
+  <p class="onesentence">The source material is preserved in <code>raw/</code>; this page indexes it, and <a href="contradictions.html">contradictions.html</a> resolves disagreements.</p>
 
   <div class="callout">
     <span class="label">Preservation rule</span>
-    <p>Every file listed below is preserved <strong>unedited</strong> in <code>raw/</code> and must never be rewritten, reformatted, or "cleaned up." Organized, reconciled copies of their content live in <a href="../01-product/features.html">01-product</a>, <a href="../02-architecture/overview.html">02-architecture</a>, <a href="../03-services/index.html">03-services</a>, and <a href="../04-plan/milestones.html">04-plan</a>. If a raw file and an organized doc disagree, the organized doc's reasoning should trace back to a resolution recorded on <a href="contradictions.html">contradictions.html</a>.</p>
+    <p>Do not edit files in <code>raw/</code>. Reconciled content lives in <a href="../01-product/features.html">01-product</a>, <a href="../02-architecture/overview.html">02-architecture</a>, <a href="../03-services/index.html">03-services</a>, and <a href="../04-plan/milestones.html">04-plan</a>; disagreements are resolved in <a href="contradictions.html">contradictions.html</a>.</p>
   </div>
 
   <h2 id="inventory">Source inventory</h2>
-  <p>All non-excluded content across both source folders was read in full — roughly 500 KB total. Excluded by standing rule: <code>.git/</code>, <code>.DS_Store</code>; no <code>node_modules</code>, <code>build/</code>, or <code>DerivedData/</code> directories existed in either folder.</p>
+  <p>Inventory of roughly 500 KB of source material. <code>.git/</code> and <code>.DS_Store</code> were excluded.</p>
 
   <div class="tablewrap">
   <table>
@@ -148,10 +148,10 @@
   </table>
   </div>
 
-  <p>The two <code>.txt</code> files are extracted plain-text versions of S1 and S2's <code>.docx</code> content, kept alongside them for easy grepping without opening Word: <a href="raw/MTG_Deck_Tester_Spec_v0_1.txt">raw/MTG_Deck_Tester_Spec_v0_1.txt</a> (from S1) and <a href="raw/MTG_Deck_Tester_Spec_v1_0.txt">raw/MTG_Deck_Tester_Spec_v1_0.txt</a> (from S2).</p>
+  <p>Searchable extracts: <a href="raw/MTG_Deck_Tester_Spec_v0_1.txt">S1 text</a> and <a href="raw/MTG_Deck_Tester_Spec_v1_0.txt">S2 text</a>.</p>
 
   <h2 id="diagrams">Content extracted from diagrams</h2>
-  <p>The four draw.io files (S5&ndash;S8) are binary-ish XML and don't render as readable text anywhere else in <code>docs/</code>. This section transcribes their content verbatim so it's searchable and quotable. It is the <strong>only</strong> place this transcription happens &mdash; the resolved, reconciled architecture built from it lives on <a href="../02-architecture/overview.html">02-architecture/overview.html</a> and <a href="../02-architecture/data-model.html">02-architecture/data-model.html</a>.</p>
+  <p>Searchable transcription of S5&ndash;S8. The reconciled design is in <a href="../02-architecture/overview.html">architecture overview</a> and <a href="../02-architecture/data-model.html">data model</a>.</p>
 
   <div class="card">
     <h3>Top-level component decomposition (<code>0.1 - CD</code>)</h3>
@@ -272,14 +272,13 @@ enum CounterType = PLUS_ONE_PLUS_ONE, POISON, OIL, &hellip; ("etc")</code></pre>
     </ul>
   </div>
 
-  <p>Where these diagrams disagree with each other or with the prose specs (S1/S2), see <a href="contradictions.html">contradictions.html</a> &mdash; most notably C5 (where rules knowledge lives) and C6 (application layering), both resolved there in favor of the diagrams.</p>
+  <p>See <a href="contradictions.html">contradictions.html</a> for conflicts, especially C5 (rules ownership) and C6 (application layering).</p>
 
   <h2 id="next">What to do next</h2>
   <ol>
-    <li>If you're checking a fact, open the linked file in <code>raw/</code> directly &mdash; this page and its diagram transcription are a convenience, not a replacement.</li>
-    <li>If two sources disagree, check <a href="contradictions.html">contradictions.html</a> before assuming either one is authoritative.</li>
-    <li>For the reconciled architecture built from the diagram content above, go to <a href="../02-architecture/overview.html">02-architecture/overview.html</a> and <a href="../02-architecture/data-model.html">02-architecture/data-model.html</a>.</li>
-    <li>For how these sources map onto shipped features, see <a href="../01-product/features.html">01-product/features.html</a> and <a href="../04-plan/milestones.html">04-plan/milestones.html</a>.</li>
+    <li>Check facts in the linked <code>raw/</code> file.</li>
+    <li>Resolve disagreements through <a href="contradictions.html">contradictions.html</a>.</li>
+    <li>Use the <a href="../02-architecture/overview.html">architecture overview</a> and <a href="../02-architecture/data-model.html">data model</a> for the reconciled design.</li>
   </ol>
 </main>
 

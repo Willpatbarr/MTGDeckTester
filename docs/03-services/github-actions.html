@@ -30,7 +30,7 @@
     <h1>GitHub Actions</h1>
   </div>
 
-  <p class="whatthisis"><strong>What this is:</strong> CI that answers "does it build, do tests pass" — deliberately not set up yet. &nbsp;<strong>What to do with it:</strong> leave it alone until the named trigger fires; setting it up early burns free minutes for no real benefit at solo scale.</p>
+  <p class="whatthisis">Deferred CI setup for build and test checks.</p>
 
   <h2 id="what-why">What &amp; why</h2>
   <p>GitHub Actions would run the Swift Testing engine suite (see <a href="../02-architecture/conventions.html">conventions.html</a>) automatically on push, catching a broken build or a failing test before it's discovered by hand. Right now, that check happens manually, by running the tests locally before pushing.</p>
@@ -108,7 +108,7 @@
 
   <h2 id="next">What to do next</h2>
   <ol>
-    <li>Do nothing until a second broken-build push actually happens — see the trigger above.</li>
+    <li>Wait until the second broken-build push.</li>
     <li>When it fires, scope the workflow tightly given the 10&times; macOS minute multiplier.</li>
     <li>Continue to <a href="index.html">the service map</a> or on to <a href="../04-plan/milestones.html">milestones</a>.</li>
   </ol>

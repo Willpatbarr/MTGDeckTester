@@ -30,10 +30,10 @@
     <h1>TelemetryDeck</h1>
   </div>
 
-  <p class="whatthisis"><strong>What this is:</strong> privacy-first usage analytics, deliberately deferred until it's actually needed. &nbsp;<strong>What to do with it:</strong> ignore this until the T2 trigger fires — do not integrate it early "just in case."</p>
+  <p class="whatthisis">Privacy-first analytics, deferred until the T2 trigger.</p>
 
   <h2 id="what-why">What &amp; why</h2>
-  <p>TelemetryDeck would answer "which features does anyone actually use" once there are enough testers that the answer isn't obvious from just talking to them. It reports aggregate, anonymized usage signals rather than individual user tracking.</p>
+  <p>TelemetryDeck reports aggregate, anonymized feature usage once direct tester feedback stops scaling.</p>
   <p>Alternatives considered: Amplitude/Mixpanel (powerful, but heavyweight and explicitly rejected as premature per the services index — a privacy tax on a personal tool with zero users) and Firebase Analytics (drags in the Firebase SDK for one feature, same objection as Sentry's Crashlytics alternative). TelemetryDeck won for being privacy-first by default and lightweight, matching a solo tool that doesn't want to collect more than it needs.</p>
 
   <h2 id="trigger">Adoption trigger</h2>
@@ -74,7 +74,7 @@
     </tbody>
   </table>
   </div>
-  <p>Real secrets are never committed to the repository. Even though the app ID here is client-safe, it stays out of the codebase until the service is actually turned on — no placeholder wiring before it's needed.</p>
+  <p>The client-safe app ID stays out of the codebase until the service is enabled.</p>
 
   <h2 id="escape">Escape hatch</h2>
   <p><strong>Lock-in: Low.</strong> Usage analytics are additive and non-authoritative — nothing in the app's core logic depends on TelemetryDeck data existing or being accurate.</p>

@@ -30,7 +30,7 @@
     <h1>Scryfall</h1>
   </div>
 
-  <p class="whatthisis"><strong>What this is:</strong> the runbook for the app's only genuinely load-bearing external dependency. &nbsp;<strong>What to do with it:</strong> follow the setup steps once, then treat the caching rules as permanent — Scryfall is volunteer-run and has no paid tier to fall back on.</p>
+  <p class="whatthisis">Setup and caching rules for the app's card-data dependency.</p>
 
   <h2 id="what-why">What &amp; why</h2>
   <p>Scryfall supplies the complete MTG card database — names, mana costs, type lines, images, and (critically) <code>all_parts</code> token relations, which are what let the manual token picker limit itself to tokens a given deck can actually create. No card data means no deck import, no rendering, no token picker: the entire app is downstream of this one API.</p>
@@ -82,7 +82,7 @@
     </tbody>
   </table>
   </div>
-  <p>As with every service in this project, real secrets are never committed to the repository — there simply are none here to commit.</p>
+  <p>Scryfall requires no secret credentials.</p>
 
   <h2 id="escape">Escape hatch</h2>
   <p><strong>Lock-in: Low.</strong> No data lives only at Scryfall — the downloaded bulk file and the image cache both live on the device's own disk once fetched.</p>

@@ -28,10 +28,10 @@
     <h1>Contradictions Ledger</h1>
   </div>
 
-  <p class="whatthisis"><strong>What this is:</strong> every place the source documents disagree with themselves, with each other, or with a diagram, and how each was resolved. <strong>What to do with it:</strong> read the summary strip, then read C1, C8, and C13 in full before trusting anything downstream that depends on them &mdash; those three are the ones this plan needs your eyes on.</p>
+  <p class="whatthisis">Fourteen source conflicts and their resolutions. C1, C8, and C13 still need owner review.</p>
 
   <h2 id="one-sentence">One-sentence version</h2>
-  <p class="onesentence">Fourteen conflicts were found across the source dump; eleven are resolved with no further input needed, and three &mdash; C1, C8, C13 &mdash; are flagged for the project owner to actually read and confirm.</p>
+  <p class="onesentence">Eleven conflicts are settled; review C1, C8, and C13.</p>
 
   <h2 id="summary">Summary</h2>
   <div class="tablewrap">
@@ -43,18 +43,17 @@
       <tr><td>Confirmed as not-really-a-conflict <span class="tag decided">[DECIDED]</span></td><td>3</td><td>C7 (naming only), C9 (architecture vs. delivery), C10 (deliberate, both true)</td></tr>
       <tr><td>Deferred outright <span class="tag deferred">[DEFERRED]</span></td><td>1</td><td>C12</td></tr>
       <tr><td>Confirmed agreement, no conflict <span class="tag locked">[LOCKED]</span></td><td>1</td><td>C14</td></tr>
-      <tr><td><strong>Needs the owner's input</strong></td><td><strong>3</strong></td><td><strong>C1</strong> (flagged YES &mdash; the single biggest call in the plan), <strong>C8</strong> and <strong>C13</strong> (flagged "worth a look")</td></tr>
+      <tr><td><strong>Needs owner input</strong></td><td><strong>3</strong></td><td><strong>C1</strong>, <strong>C8</strong>, <strong>C13</strong></td></tr>
     </tbody>
   </table>
   </div>
 
   <div class="callout">
     <span class="label">Needs your eye</span>
-    <p>Three rows below have something in the last column other than "No." <strong>C1</strong> changes the size of the entire MVP by roughly 10&times; and is the biggest single call in this plan. <strong>C8</strong> and <strong>C13</strong> are smaller but each hides a default you might not actually agree with. Full arguments for all three are laid out as cards after the table &mdash; the table row is just the index.</p>
+    <p><strong>C1</strong> can expand the MVP by roughly 10&times;. <strong>C8</strong> and <strong>C13</strong> set smaller product defaults. Their arguments follow the ledger.</p>
   </div>
 
   <h2 id="ledger">Full ledger</h2>
-  <p>Columns: Topic | Position A (source) | Position B (source) | Resolution | Tag | Needs my input?</p>
 
   <div class="tablewrap">
   <table>
@@ -182,37 +181,35 @@
     <span class="label">C1 &mdash; Depth of the rules engine &mdash; the central conflict &mdash; <strong>needs your input</strong></span>
     <p><strong>Position A</strong> <em>(S1 &sect;2.2, &sect;6.2)</em>: "Prioritize playability, speed, and deck testing usefulness over complete MTG rules accuracy. The application should avoid implementing a full MTG rules engine until later versions require it." S1 explicitly excludes the priority system, stack resolution, trigger handling, and replacement effects from scope.</p>
     <p><strong>Position B</strong> <em>(S2 &sect;3, &sect;8)</em>: official MTG priority rules, official state-based actions checked to fixpoint, official replacement/prevention ordering, the full continuous-effects layer system with dependency and timestamp rules, mana as explicit pool objects, official combat, and official copy rules &mdash; all marked MVP, and all marked "Completed" in the spec's own status tracking.</p>
-    <p><strong>Resolution: Position B.</strong> The direction of travel from S1 to S2 is unmistakable &mdash; the project moved from "avoid a rules engine" to "eight rules subsystems, each individually worked through and marked Completed." S2 is also vastly more considered: S1 devotes two sentences to this question, S2 devotes roughly 40 specified behaviours to it. Two tie-breaking rules point the same direction here: specificity beats vagueness, and direction of travel beats any single note.</p>
-    <p>This reads as <strong>you changing your mind over time</strong>, not a live disagreement between two documents you hold simultaneously. But the consequence is real and large: <strong>accepting Position B makes the MVP roughly 10&times; bigger than S1 originally described.</strong> That's mitigated structurally by milestone sequencing &mdash; M2 ships a fully playable manual sandbox <em>before</em> any rules subsystem is written, so there's a usable product at the halfway point even if the rules engine takes longer than planned. See <a href="../04-plan/milestones.html">04-plan/milestones.html</a> for that sequencing.</p>
-    <p><strong>Why this needs your input:</strong> this is the single biggest call in the entire plan. If you disagree with Position B, the whole milestone tree changes &mdash; M3 and M4 (Rules Core, Combat &amp; Copy Effects) shrink or disappear, and the fallback documented at C2 (Simple Bot Mode) becomes the actual plan instead of a safety net.</p>
+    <p><strong>Resolution: Position B.</strong> S2 is newer and much more specific, replacing two sentences in S1 with roughly 40 defined behaviors.</p>
+    <p><strong>Impact:</strong> Position B makes the MVP roughly 10&times; larger. M2 still delivers a manual sandbox before rules work begins; see <a href="../04-plan/milestones.html">milestones</a>.</p>
+    <p><strong>Decision needed:</strong> rejecting Position B shrinks or removes M3 and M4 and makes Simple Bot Mode the plan.</p>
   </div>
 
   <div class="callout" id="c8">
     <span class="label">C8 &mdash; Priority timeout vs. manual advancement &mdash; worth a look</span>
-    <p>Both statements come from the <em>same document, same section</em> of S2 &sect;3, and they fight each other: "Priority automatically passes after approximately 5 seconds if the active player takes no action" versus "Turn advancement setting: Manual (default). Manual mode advances one phase/step at a time."</p>
-    <p><strong>Resolution:</strong> a 5-second auto-pass in a solo <em>testing</em> tool is actively hostile &mdash; you lose priority while thinking about a line of play. The timeout ships as a setting, <strong>default OFF</strong>. Manual advancement stays the default and remains authoritative. Auto-pass is opt-in, and is only meaningful when turn advancement is separately set to Automatic.</p>
-    <p>This default is recorded as <span class="tag proposed">[PROPOSED]</span> (P3 in the proposed-decisions list) precisely because it's a judgment call, not something either source settled. <strong>If you actually wanted the 5-second timer on by default</strong> &mdash; say so, and this flips.</p>
+    <p>S2 &sect;3 specifies both a 5-second priority timeout and manual turn advancement by default.</p>
+    <p><strong>Resolution:</strong> keep manual advancement authoritative and ship auto-pass as an opt-in setting. Its default is <span class="tag proposed">[PROPOSED]</span> P3.</p>
   </div>
 
   <div class="callout" id="c13">
     <span class="label">C13 &mdash; Fixed single-screen battlefield vs. iPhone-first &mdash; worth a look</span>
-    <p>Both statements are in S2 and they don't fit together. S2 &sect;5: "Human battlefield uses a fixed single-screen play area. No zooming, panning, or scrolling in MVP." "Fixed card size." "Cards must remain fully visible while being positioned." S2 &sect;1: "Universal architecture with iPhone-first MVP UI" &mdash; and the format is locked to Commander (C3), which routinely reaches 20&ndash;40 permanents per player.</p>
-    <p>A non-scrolling, fixed-size battlefield on an iPhone screen holds roughly 12&ndash;15 cards before it becomes unusable &mdash; well short of a real Commander board.</p>
-    <p><strong>Resolution:</strong> keep the fixed, no-scroll play area exactly as specified for MVP. It's the simpler build and it preserves the freeform drag model that the rest of the battlefield UI depends on. Running out of room is treated as the <em>documented trigger</em> for one of two follow-ups, neither built now: (a) pinch-zoom on the play area, or (b) the "Clean Up Board" auto-organize feature S2 already anticipates elsewhere. This mitigation is recorded as <span class="tag deferred">[DEFERRED]</span> in the feature inventory (see <a href="../01-product/features.html">01-product/features.html</a>, Should-have list).</p>
-    <p><strong>Why this is worth a look:</strong> you may already know this will bite you the first time you actually play a full Commander game on the device. The resolution above assumes you'd rather ship the simple version and hit the wall than build zoom/cleanup speculatively &mdash; confirm that's the trade-off you want.</p>
+    <p>S2 requires a fixed, non-scrolling battlefield for an iPhone-first Commander app. An iPhone holds roughly 12&ndash;15 fixed-size cards, while Commander boards often reach 20&ndash;40.</p>
+    <p><strong>Resolution:</strong> ship the simpler fixed battlefield. If space fails in use, add pinch-zoom or “Clean Up Board”; both remain <span class="tag deferred">[DEFERRED]</span> in <a href="../01-product/features.html">features</a>.</p>
+    <p><strong>Decision needed:</strong> confirm that shipping the simpler layout before its mitigation is acceptable.</p>
   </div>
 
   <div class="callout good">
     <span class="label">Closing note</span>
-    <p>Nothing else in the dump conflicts. S3 (<code>Untitled document.docx</code>) is empty, and S4 (<code>mtg-deck-tester-map.html</code>) is generated from S2 &mdash; neither introduces an independent position, so neither could contradict anything.</p>
+    <p>No other conflicts were found. S3 is empty, and S4 is generated from S2.</p>
   </div>
 
   <h2 id="next">What to do next</h2>
   <ol>
-    <li>Read the three callout cards above (C1, C8, C13) and confirm, adjust, or override each resolution.</li>
+    <li>Confirm, adjust, or override C1, C8, and C13.</li>
     <li>If C1 changes, revisit <a href="../04-plan/milestones.html">04-plan/milestones.html</a> before treating M3/M4 as settled.</li>
     <li>If C8 or C13 change, update the corresponding row in <a href="../01-product/decisions.html">01-product/decisions.html</a>'s <code>[PROPOSED]</code> list (P3 and P4).</li>
-    <li>For the raw text these resolutions are drawn from, see <a href="../index.html">the source index</a> and the files in <code>raw/</code>.</li>
+    <li>Use the <a href="index.html">source index</a> to verify the raw text.</li>
   </ol>
 </main>
 
